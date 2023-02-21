@@ -12,7 +12,7 @@ public class Main {
 
             System.out.print("airi high res\n" + text);
 
-            text = tesseract.doOCR(new File("C:\\Users\\appsm\\Downloads\\akane.png"));
+            text = tesseract.doOCR(new File("C:\\Users\\appsm\\Downloads\\fuuka level.png"));
 
             System.out.print("\n akane \n");
             System.out.print(text);

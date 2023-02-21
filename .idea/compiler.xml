@@ -9,8 +9,10 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="Blue_Archive_Character_Logger_Maven" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="Blue_Archive_Character_Logger_Maven" target="1.5" />
+    </bytecodeTargetLevel>
   </component>
 </project>
