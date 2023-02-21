@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="src">
+    <CLASSES>
+      <root url="file://$USER_HOME$/Downloads/Tess4J-3.4.8-src/Tess4J/dist" />
+      <root url="file://$USER_HOME$/Downloads/Tess4J-3.4.8-src/Tess4J/lib" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+    <jarDirectory url="file://$USER_HOME$/Downloads/Tess4J-3.4.8-src/Tess4J/dist" recursive="false" />
+    <jarDirectory url="file://$USER_HOME$/Downloads/Tess4J-3.4.8-src/Tess4J/lib" recursive="false" />
+  </library>
+</component>
