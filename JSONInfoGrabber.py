@@ -1,7 +1,8 @@
 import json
 import requests
 
-
+# maybe turn this into an updater? and export the update 
+# to like a txt file so everyone else can work with it
 
 
 
@@ -32,6 +33,13 @@ class bidict:
             return self.revDict[key]
         else:
             return "Key does not exist"
+
+    def toString(self):
+        bidictToString = "{"
+        for key in self.dict:
+            bidictToString += "{}:{}, ".format(key, self.dict[key])
+
+        return bidictToString
         
 
 
@@ -91,3 +99,4 @@ for itemID in itemDict:
             itemNameList.append(itemName)
                                 
         
+print(itemBidict.toString())
