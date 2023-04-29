@@ -13,13 +13,13 @@ SCALE_INCREMENT = 0.01
 # always have the maximum correlation" and ccoeff pretty much fixes that problem
 # sqdiff calculates the intensity in DIFFERENCE of the images. so you wanna look for the min if using sqdiff
 # you want to use NORMED functions when template matching with templates of different sizes
-TEMPLATE_MATCH_METHODS_ARRAY = [cv2.TM_CCOEFF]#, cv2.TM_CCORR_NORMED, cv2.TM_SQDIFF, cv2.TM_SQDIFF_NORMED]
+#TEMPLATE_MATCH_METHODS_ARRAY = [cv2.TM_CCOEFF]#, cv2.TM_CCORR_NORMED, cv2.TM_SQDIFF, cv2.TM_SQDIFF_NORMED]
 TEMPLATE_MATCH_METHOD = cv2.TM_SQDIFF_NORMED
 PATH_TO_TESSERACT = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 GEAR_X_OFFSET = 4
 GEAR_Y_OFFSET = 6
 BAD_COUNTER_MAX = 150000
-OVERLAP_THRESHOLD = 0.30
+OVERLAP_THRESHOLD = 0.35
 TIME = time.time()
 
 # indices
@@ -271,7 +271,7 @@ def returnErrAndDiff(template_img, subimage):
 
 # from an array of results, return results that are above a certain threshold.
 # filter out results that have major overlap to avoid repeated hits
-def nms(matchResults, matchLocations, matchWidth, matchHeight):
+def nms(templateMatchMethod, matchResults, matchLocations, matchWidth, matchHeight):
     # unpack our arrays
     x1MatchCoordinates = matchLocations[1]
     x2MatchCoordinates = x1MatchCoordinates + matchWidth
@@ -283,7 +283,10 @@ def nms(matchResults, matchLocations, matchWidth, matchHeight):
     # but since np.argsort sorts from low to high, we reverse it with [::-1].
     # we create a dedicated array instead of just sorting the results array itself
     # since we're working with other arrays (the boxes array which has x and y coordinates)
-    indexOrder = np.argsort(matchResults)[::-1]
+    if templateMatchMethod == cv2.TM_SQDIFF or templateMatchMethod == cv2.TM_SQDIFF_NORMED:
+        indexOrder = np.argsort(matchResults)[::1]
+    else:
+        indexOrder = np.argsort(matchResults)[::-1]
     
     # get the area of the box. they should all be the same area
     matchArea = matchWidth * matchHeight
@@ -339,9 +342,10 @@ def nms(matchResults, matchLocations, matchWidth, matchHeight):
         # iterate over them later. also delete the one we just worked on cause it's done
         
         indexDelete = np.where(overlapPercentages > OVERLAP_THRESHOLD)[0]
-        indexDelete = np.append(indexDelete, bestMatchIndex)
+        if bestMatchIndex not in indexDelete:
+            indexDelete = np.append(indexDelete, bestMatchIndex)
         
-        indexOrder = np.setdiff1d(indexOrder, indexDelete)
+        indexOrder = np.setdiff1d(indexOrder, indexDelete, True)
         
 
     # return the coordinates of the filtered boxes
@@ -921,22 +925,22 @@ def main():
 ##
 
 
-ueStarsSubimage = cv2.imread("airi ue stars subimage.png", cv2.IMREAD_COLOR)
+ueStarsSubimage = cv2.imread("maki ue stars subimage.png", cv2.IMREAD_COLOR)
 ueStarTemplate = cv2.imread("ue star template.png", cv2.IMREAD_COLOR)
 ueStarMask = cv2.imread("ue star mask.png", cv2.IMREAD_GRAYSCALE)
 ##ueStarMask = createMaskFromTransparency(ueStarTemplate)
-ueStarSubimage, matchWidth, matchHeight, ueStarResult = subimageScaledSearch(ueStarsSubimage, ueStarTemplate, ueStarMask)#, equipmentSubimageScale)
+ueStarSubimage, matchWidth, matchHeight, ueStarScale, ueStarResult = subimageMultiScaleSearch(ueStarsSubimage, ueStarTemplate, ueStarMask)#, equipmentSubimageScale)
 
 cv2.imshow("ueStarSubimage", ueStarSubimage)
 ueStarSubimage = cv2.resize(ueStarSubimage, (ueStarSubimage.shape[1] *5,ueStarSubimage.shape[0] *5))
 cv2.imshow("resueStarSubimage", ueStarSubimage)
 
-bestMatchLocations = np.where(ueStarResult <= 0.1)
-filteredMatchesResults = np.extract(ueStarResult <= 0.1, ueStarResult)
+bestMatchLocations = np.where(ueStarResult <= 0.2)
+filteredMatchesResults = np.extract(ueStarResult <= 0.2, ueStarResult)
 
 # run our coordinates and results through NMS. now we should have coordinates of the 
 # best results with little-to-no overlapping areas
-nmsCoordinates = nms(filteredMatchesResults, bestMatchLocations, matchWidth, matchHeight)
+nmsCoordinates = nms(TEMPLATE_MATCH_METHOD, filteredMatchesResults, bestMatchLocations, matchWidth, matchHeight)
 
 for index in range(len(nmsCoordinates)):
     color = (0, index/len(nmsCoordinates) * 255, 0)
@@ -945,5 +949,5 @@ for index in range(len(nmsCoordinates)):
 cv2.imshow("ueStarsSubimage", ueStarsSubimage)
 ueStarsSubimage = cv2.resize(ueStarsSubimage, (ueStarsSubimage.shape[1] *5,ueStarsSubimage.shape[0] *5))
 cv2.imshow("resueStarsSubimage", ueStarsSubimage)
-cv2.imwrite("airi ue stars boxed subimage.png", ueStarsSubimage)
+#cv2.imwrite("airi ue stars boxed subimage.png", ueStarsSubimage)
 print(len(nmsCoordinates))
