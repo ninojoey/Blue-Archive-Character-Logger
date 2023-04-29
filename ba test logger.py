@@ -5,29 +5,33 @@ import numpy as np
 from pytesseract import pytesseract
 
 
-SITE_VERSION = "1.3.5"
+
+PATH_TO_TESSERACT = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+GEAR_X_OFFSET = 4
+GEAR_Y_OFFSET = 6
+
+BAD_COUNTER_MAX = 150000
+SQDIFF_NORMED_UE_STAR_THRESHOLD = 0.03
+OVERLAP_THRESHOLD = 0.35
 SCALE_INCREMENT = 0.01
-# cv2.TM_CCOEFF_NORMED returns inf
+
 # ccorr is bad because "we're dealing with discrete digital signals that have a
 # defined maximum value (images), that means that a bright white patch of the image will basically
-# always have the maximum correlation" and ccoeff pretty much fixes that problem
+# always have the maximum correlation" and ccoeff pretty much fixes that problem.
+# but for some reason ccoeff has been returning infinity in some cases... so yeah guess not that.
 # sqdiff calculates the intensity in DIFFERENCE of the images. so you wanna look for the min if using sqdiff
 # you want to use NORMED functions when template matching with templates of different sizes
 #TEMPLATE_MATCH_METHODS_ARRAY = [cv2.TM_CCOEFF]#, cv2.TM_CCORR_NORMED, cv2.TM_SQDIFF, cv2.TM_SQDIFF_NORMED]
 TEMPLATE_MATCH_METHOD = cv2.TM_SQDIFF_NORMED
-PATH_TO_TESSERACT = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-GEAR_X_OFFSET = 4
-GEAR_Y_OFFSET = 6
-BAD_COUNTER_MAX = 150000
-OVERLAP_THRESHOLD = 0.35
-TIME = time.time()
+
+
 
 # indices
 # [2:] = starting with index 2
 # [:2] up to index 2
 # [1:2] items from index 1 to 2
 # [::2] = every 2 items, in other words skip 1
-# [::-1] = every item, back in backwards order
+# [::-1] = every item, but in backwards order
 # [2::2] starting with index 2, then every other item afterwards
 # [:8:2] ending at index 8, get every other element starting from the beg
 # [1:8:2] starting at index 1 and ending at index 8, get every other item
@@ -38,6 +42,7 @@ TIME = time.time()
 # template matching
 #    multi scale matching
 #    multi object matching
+#    scaled search
 #    methods
 # non-maximum suppression
 # masks
@@ -55,15 +60,6 @@ TIME = time.time()
 #    morphology
 #    contours
 #    flood fill
-
-
-# logic for pulling from json
-# take in import txt. check export and site version. check if it lines up with our
-# copy of the database (variables inside database will be used to check)
-# if lines up, continue with our database. if not, we update our database by
-# running the json grabber thingie and write to the database.
-
-
 
 
 def convertImageToString(img):
@@ -296,6 +292,7 @@ def nms(templateMatchMethod, matchResults, matchLocations, matchWidth, matchHeig
 
     # array to store the coordinates of our best matches, filtering out overlappers
     bestMatchLocations = []
+    bestMatches = []
     
 
     # go through all our boxes starting with highest match to lowest match.
@@ -314,6 +311,7 @@ def nms(templateMatchMethod, matchResults, matchLocations, matchWidth, matchHeig
         y2BestMatchCoordinate = y2MatchCoordinates[bestMatchIndex]
         
         bestMatchLocations.append((x1BestMatchCoordinate, y1BestMatchCoordinate))
+        bestMatches.append(matchResults[bestMatchIndex])
 
         ## determine the overlap of the other matches with the current match.
         ## to find the overlapping area, the x and y values should be furthest away
@@ -349,7 +347,7 @@ def nms(templateMatchMethod, matchResults, matchLocations, matchWidth, matchHeig
         
 
     # return the coordinates of the filtered boxes
-    return bestMatchLocations
+    return bestMatchLocations, bestMatches
 
 
 #
@@ -905,7 +903,7 @@ def main():
 
 
 ##
-##sourceImage = cv2.imread("airi.png", cv2.IMREAD_COLOR)
+##sourceImage = cv2.imread("maki.png", cv2.IMREAD_COLOR)
 ##equipmentTemplateImage = cv2.imread("skill template.png", cv2.IMREAD_COLOR)
 ##equipmentMaskImage = cv2.imread("skill mask.png", cv2.IMREAD_GRAYSCALE)
 ##
@@ -917,15 +915,17 @@ def main():
 ##ueSubimage, _, _, _ = subimageScaledSearch(equipmentSubimage, ueTemplateImage, ueMaskImage, equipmentSubimageScale)
 ##cv2.imshow("ueSubimage", ueSubimage)
 ##
-##
 ##ueStarsMaskImage = cv2.imread("ue stars mask.png", cv2.IMREAD_GRAYSCALE)
 ##ueStarsSubimage = cropImageWithMask(ueSubimage, ueStarsMaskImage)
-##cv2.imwrite("airi ue stars subimage.png", ueStarsSubimage)
 ##cv2.imshow("ueStarsSubimage", ueStarsSubimage)
 ##
-
-
+##
+##
+##cv2.imwrite("maki ue stars subimage.png", ueStarsSubimage)
 ueStarsSubimage = cv2.imread("maki ue stars subimage.png", cv2.IMREAD_COLOR)
+
+
+
 ueStarTemplate = cv2.imread("ue star template.png", cv2.IMREAD_COLOR)
 ueStarMask = cv2.imread("ue star mask.png", cv2.IMREAD_GRAYSCALE)
 ##ueStarMask = createMaskFromTransparency(ueStarTemplate)
@@ -935,19 +935,22 @@ cv2.imshow("ueStarSubimage", ueStarSubimage)
 ueStarSubimage = cv2.resize(ueStarSubimage, (ueStarSubimage.shape[1] *5,ueStarSubimage.shape[0] *5))
 cv2.imshow("resueStarSubimage", ueStarSubimage)
 
-bestMatchLocations = np.where(ueStarResult <= 0.2)
-filteredMatchesResults = np.extract(ueStarResult <= 0.2, ueStarResult)
+bestMatchLocations = np.where(ueStarResult <= SQDIFF_NORMED_UE_STAR_THRESHOLD)
+filteredMatchesResults = np.extract(ueStarResult <= SQDIFF_NORMED_UE_STAR_THRESHOLD, ueStarResult)
 
 # run our coordinates and results through NMS. now we should have coordinates of the 
 # best results with little-to-no overlapping areas
-nmsCoordinates = nms(TEMPLATE_MATCH_METHOD, filteredMatchesResults, bestMatchLocations, matchWidth, matchHeight)
+nmsCoordinates, nmsMatches = nms(TEMPLATE_MATCH_METHOD, filteredMatchesResults, bestMatchLocations, matchWidth, matchHeight)
+
 
 for index in range(len(nmsCoordinates)):
+##    print(nmsCoordinates[index])
+##    print(nmsMatches[index])
     color = (0, index/len(nmsCoordinates) * 255, 0)
     cv2.rectangle(ueStarsSubimage, nmsCoordinates[index], (nmsCoordinates[index][0] + matchWidth, nmsCoordinates[index][1] + matchHeight), color, 1)
 
 cv2.imshow("ueStarsSubimage", ueStarsSubimage)
 ueStarsSubimage = cv2.resize(ueStarsSubimage, (ueStarsSubimage.shape[1] *5,ueStarsSubimage.shape[0] *5))
 cv2.imshow("resueStarsSubimage", ueStarsSubimage)
-#cv2.imwrite("airi ue stars boxed subimage.png", ueStarsSubimage)
-print(len(nmsCoordinates))
+cv2.imwrite("maki ue stars boxed subimage.png", ueStarsSubimage)
+#print(len(nmsCoordinates))
