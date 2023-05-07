@@ -1,13 +1,5 @@
 class Student:
-    def __init__(self):
-        self.ID = "99999"
-        self.name = "Dummy"
-        self.currentStats = Stats()
-        self.targetStats = Stats()
-        self.enabled = False
-        self.eleph = Eleph()
-
-    def __init__(self, ID, name, current, target, enabled, eleph):
+    def __init__(self, ID = "99999", name = "Dummy", current = Stats(), target = Stats(), enabled = False, eleph = Eleph()):
         self.ID = ID
         self.name = name
         self.current = current
