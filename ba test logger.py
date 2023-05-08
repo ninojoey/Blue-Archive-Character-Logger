@@ -5,7 +5,9 @@ import random
 import numpy as np
 from pytesseract import pytesseract
 
-
+BOND_CHEAT_SHEET_IPAD = [[2,0],[2,0],[1,4],[2,2],[1,6],[2,2],[1,9],[1,9],[1],[1,3],[2,2],[2,0],[2,0],[2,0],[1,8],[1,7],[1,4],[2,0],[2,0],[1,2],[2,0],[2,0],[2,0],[2,0],[2,0],[1,8],[1,5],[1,7],[4]]
+BOND_CHEAT_SHEET = [[2,0],[2,0],[2,0],[2,0],[1,4],[2,2],[1,6],[2,2],[1,9],[1,9],[6],[2],[2],[1],[1,3],[2,2],[2,0],[2,0],[2,0],[1,8],[2,4],[2,4],[8],[1,7],[1,4],[2,0],[2,3],[2,0],[1,2],[2,0],[2,0],[2,0],[2,0],[2,0],[1,8],[1,5],[1,7],[4]]
+COUNTER = 0
 
 PATH_TO_TESSERACT = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 GEAR_X_OFFSET = 4
@@ -14,6 +16,10 @@ GEAR_Y_OFFSET = 6
 BAD_COUNTER_MAX = 150000
 UE_STAR_THRESHOLD = 0.03
 OVERLAP_THRESHOLD = 0.35
+
+# min miss: 0.05623598396778107
+# max hit: 0.038083869963884354
+BOND_MATCH_THRESHOLD = 0.045
 
 # min miss:     0.612736701965332
 # average miss: 0.72706709057093
@@ -56,6 +62,96 @@ NAME_MASK_IMAGE = cv2.imread("name mask.png", cv2.IMREAD_GRAYSCALE)
 STATS_NAME_MASK_IMAGE = cv2.imread("stats name mask.png", cv2.IMREAD_GRAYSCALE)
 STATS_BOND_MASK_IMAGE = cv2.imread("stats bond mask.png", cv2.IMREAD_GRAYSCALE)
 STATS_LEVEL_MASK_IMAGE = cv2.imread("stats level mask.png", cv2.IMREAD_GRAYSCALE)
+
+BOND_MASK_IMAGES = []
+BOND_0_MASK_IMAGE = cv2.imread("bond 0 mask.png", cv2.IMREAD_GRAYSCALE)
+BOND_1_MASK_IMAGE = cv2.imread("bond 1 mask.png", cv2.IMREAD_GRAYSCALE)
+BOND_2_MASK_IMAGE = cv2.imread("bond 2 mask.png", cv2.IMREAD_GRAYSCALE)
+BOND_3_MASK_IMAGE = cv2.imread("bond 3 mask.png", cv2.IMREAD_GRAYSCALE)
+BOND_4_MASK_IMAGE = cv2.imread("bond 4 mask.png", cv2.IMREAD_GRAYSCALE)
+BOND_5_MASK_IMAGE = cv2.imread("bond 5 mask.png", cv2.IMREAD_GRAYSCALE)
+BOND_6_MASK_IMAGE = cv2.imread("bond 6 mask.png", cv2.IMREAD_GRAYSCALE)
+BOND_7_MASK_IMAGE = cv2.imread("bond 7 mask.png", cv2.IMREAD_GRAYSCALE)
+BOND_8_MASK_IMAGE = cv2.imread("bond 8 mask.png", cv2.IMREAD_GRAYSCALE)
+BOND_9_MASK_IMAGE = cv2.imread("bond 9 mask.png", cv2.IMREAD_GRAYSCALE)
+BOND_MASK_IMAGES.append(BOND_0_MASK_IMAGE)
+BOND_MASK_IMAGES.append(BOND_1_MASK_IMAGE)
+BOND_MASK_IMAGES.append(BOND_2_MASK_IMAGE)
+BOND_MASK_IMAGES.append(BOND_3_MASK_IMAGE)
+BOND_MASK_IMAGES.append(BOND_4_MASK_IMAGE)
+BOND_MASK_IMAGES.append(BOND_5_MASK_IMAGE)
+BOND_MASK_IMAGES.append(BOND_6_MASK_IMAGE)
+BOND_MASK_IMAGES.append(BOND_7_MASK_IMAGE)
+BOND_MASK_IMAGES.append(BOND_8_MASK_IMAGE)
+BOND_MASK_IMAGES.append(BOND_9_MASK_IMAGE)
+
+BOND_TEMPLATE_IMAGES = []
+BOND_0_TEMPLATE_IMAGE = cv2.imread("bond 0 template.png", cv2.IMREAD_COLOR)
+BOND_1_TEMPLATE_IMAGE = cv2.imread("bond 1 template.png", cv2.IMREAD_COLOR)
+BOND_2_TEMPLATE_IMAGE = cv2.imread("bond 2 template.png", cv2.IMREAD_COLOR)
+BOND_3_TEMPLATE_IMAGE = cv2.imread("bond 3 template.png", cv2.IMREAD_COLOR)
+BOND_4_TEMPLATE_IMAGE = cv2.imread("bond 4 template.png", cv2.IMREAD_COLOR)
+BOND_5_TEMPLATE_IMAGE = cv2.imread("bond 5 template.png", cv2.IMREAD_COLOR)
+BOND_6_TEMPLATE_IMAGE = cv2.imread("bond 6 template.png", cv2.IMREAD_COLOR)
+BOND_7_TEMPLATE_IMAGE = cv2.imread("bond 7 template.png", cv2.IMREAD_COLOR)
+BOND_8_TEMPLATE_IMAGE = cv2.imread("bond 8 template.png", cv2.IMREAD_COLOR)
+BOND_9_TEMPLATE_IMAGE = cv2.imread("bond 9 template.png", cv2.IMREAD_COLOR)
+BOND_TEMPLATE_IMAGES.append(BOND_0_TEMPLATE_IMAGE)
+BOND_TEMPLATE_IMAGES.append(BOND_1_TEMPLATE_IMAGE)
+BOND_TEMPLATE_IMAGES.append(BOND_2_TEMPLATE_IMAGE)
+BOND_TEMPLATE_IMAGES.append(BOND_3_TEMPLATE_IMAGE)
+BOND_TEMPLATE_IMAGES.append(BOND_4_TEMPLATE_IMAGE)
+BOND_TEMPLATE_IMAGES.append(BOND_5_TEMPLATE_IMAGE)
+BOND_TEMPLATE_IMAGES.append(BOND_6_TEMPLATE_IMAGE)
+BOND_TEMPLATE_IMAGES.append(BOND_7_TEMPLATE_IMAGE)
+BOND_TEMPLATE_IMAGES.append(BOND_8_TEMPLATE_IMAGE)
+BOND_TEMPLATE_IMAGES.append(BOND_9_TEMPLATE_IMAGE)
+
+LEVEL_MASK_IMAGES = []
+LEVEL_0_MASK_IMAGE = cv2.imread("level 0 mask.png", cv2.IMREAD_GRAYSCALE)
+LEVEL_1_MASK_IMAGE = cv2.imread("level 1 mask.png", cv2.IMREAD_GRAYSCALE)
+LEVEL_2_MASK_IMAGE = cv2.imread("level 2 mask.png", cv2.IMREAD_GRAYSCALE)
+LEVEL_3_MASK_IMAGE = cv2.imread("level 3 mask.png", cv2.IMREAD_GRAYSCALE)
+LEVEL_4_MASK_IMAGE = cv2.imread("level 4 mask.png", cv2.IMREAD_GRAYSCALE)
+LEVEL_5_MASK_IMAGE = cv2.imread("level 5 mask.png", cv2.IMREAD_GRAYSCALE)
+LEVEL_6_MASK_IMAGE = cv2.imread("level 6 mask.png", cv2.IMREAD_GRAYSCALE)
+LEVEL_7_MASK_IMAGE = cv2.imread("level 7 mask.png", cv2.IMREAD_GRAYSCALE)
+LEVEL_8_MASK_IMAGE = cv2.imread("level 8 mask.png", cv2.IMREAD_GRAYSCALE)
+LEVEL_9_MASK_IMAGE = cv2.imread("level 9 mask.png", cv2.IMREAD_GRAYSCALE)
+LEVEL_MASK_IMAGES.append(LEVEL_0_MASK_IMAGE)
+LEVEL_MASK_IMAGES.append(LEVEL_1_MASK_IMAGE)
+LEVEL_MASK_IMAGES.append(LEVEL_2_MASK_IMAGE)
+LEVEL_MASK_IMAGES.append(LEVEL_3_MASK_IMAGE)
+LEVEL_MASK_IMAGES.append(LEVEL_4_MASK_IMAGE)
+LEVEL_MASK_IMAGES.append(LEVEL_5_MASK_IMAGE)
+LEVEL_MASK_IMAGES.append(LEVEL_6_MASK_IMAGE)
+LEVEL_MASK_IMAGES.append(LEVEL_7_MASK_IMAGE)
+LEVEL_MASK_IMAGES.append(LEVEL_8_MASK_IMAGE)
+LEVEL_MASK_IMAGES.append(LEVEL_9_MASK_IMAGE)
+
+LEVEL_TEMPLATE_IMAGES = []
+LEVEL_0_TEMPLATE_IMAGE = cv2.imread("level 0 template.png", cv2.IMREAD_COLOR)
+LEVEL_1_TEMPLATE_IMAGE = cv2.imread("level 1 template.png", cv2.IMREAD_COLOR)
+LEVEL_2_TEMPLATE_IMAGE = cv2.imread("level 2 template.png", cv2.IMREAD_COLOR)
+LEVEL_3_TEMPLATE_IMAGE = cv2.imread("level 3 template.png", cv2.IMREAD_COLOR)
+LEVEL_4_TEMPLATE_IMAGE = cv2.imread("level 4 template.png", cv2.IMREAD_COLOR)
+LEVEL_5_TEMPLATE_IMAGE = cv2.imread("level 5 template.png", cv2.IMREAD_COLOR)
+LEVEL_6_TEMPLATE_IMAGE = cv2.imread("level 6 template.png", cv2.IMREAD_COLOR)
+LEVEL_7_TEMPLATE_IMAGE = cv2.imread("level 7 template.png", cv2.IMREAD_COLOR)
+LEVEL_8_TEMPLATE_IMAGE = cv2.imread("level 8 template.png", cv2.IMREAD_COLOR)
+LEVEL_9_TEMPLATE_IMAGE = cv2.imread("level 9 template.png", cv2.IMREAD_COLOR)
+LEVEL_TEMPLATE_IMAGES.append(LEVEL_0_TEMPLATE_IMAGE)
+LEVEL_TEMPLATE_IMAGES.append(LEVEL_1_TEMPLATE_IMAGE)
+LEVEL_TEMPLATE_IMAGES.append(LEVEL_2_TEMPLATE_IMAGE)
+LEVEL_TEMPLATE_IMAGES.append(LEVEL_3_TEMPLATE_IMAGE)
+LEVEL_TEMPLATE_IMAGES.append(LEVEL_4_TEMPLATE_IMAGE)
+LEVEL_TEMPLATE_IMAGES.append(LEVEL_5_TEMPLATE_IMAGE)
+LEVEL_TEMPLATE_IMAGES.append(LEVEL_6_TEMPLATE_IMAGE)
+LEVEL_TEMPLATE_IMAGES.append(LEVEL_7_TEMPLATE_IMAGE)
+LEVEL_TEMPLATE_IMAGES.append(LEVEL_8_TEMPLATE_IMAGE)
+LEVEL_TEMPLATE_IMAGES.append(LEVEL_9_TEMPLATE_IMAGE)
+
+
 
 STATS_INFO_MASK_IMAGES = []
 STATS_INFO_MASK_IMAGES.append(STATS_NAME_MASK_IMAGE)
@@ -1033,11 +1129,13 @@ def getStudentStats(sourceImage, imageScale):
     cv2.imshow("stats sub", statsSubimage)
     
     # process our stats subimage
-    processedStatsSubimage = processBondImage(statsSubimage)
+##    processedStatsSubimage = processBondImage(statsSubimage)
 ##    cv2.imshow("processedStatsSubimage", processedStatsSubimage)
     
 ##    studentName = getStudentName(processedStatsSubimage, imageScale)
-##    studentBond = getStudentBond(processedStatsSubimage1, imageScale)
+    studentBond = getStudentBond(statsSubimage, imageScale)
+    global COUNTER
+    COUNTER += 1
 ##    studentLevel = getStudentLevel(processedStatsSubimage, imageScale)
 ##    studentStar = getStarCount(statsSubimage, STATS_STAR_MASK_IMAGE, imageScale, STAR_TEMPLATE_IMAGE, STAR_MASK_IMAGE, STAR_MATCH_THRESHOLD)
 
@@ -1047,6 +1145,9 @@ def getStudentStats(sourceImage, imageScale):
 
 
 
+HIGHEST_HIT = 0
+LOWEST_MISS = 1
+
 def getStudentName(processedStatsImage, imageScale):
     processedNameSubimage = cropImageWithMask(processedStatsImage, STATS_NAME_MASK_IMAGE)
     
@@ -1055,22 +1156,30 @@ def getStudentName(processedStatsImage, imageScale):
     return studentName
 
 
-def getStudentBond(processedStatsImage, imageScale):
-    processedBondSubimage = cropImageWithMask(processedStatsImage, STATS_BOND_MASK_IMAGE)
-    cv2.imshow("processedBondSubimage1", processedBondSubimage)
+def getStudentBond(statsImage, imageScale):
+    bondImage = cropImageWithMask(statsImage, STATS_BOND_MASK_IMAGE)
     
-    startPoint = (0, 0)         # start at the first pixel
-    whiteColor = (255, 255, 255, 255)   # color to flood with
-    cv2.floodFill(processedBondSubimage, None, startPoint, whiteColor)
-    processedBondSubimage = np.invert(processedBondSubimage)
-    
-    cv2.imshow("processedBondSubimage", processedBondSubimage)
-    
-    studentBond = convertImageToString(processedBondSubimage)
+    for bondLevel in range(10):
+        bondLevelTemplateImage = BOND_TEMPLATE_IMAGES[bondLevel]
+        bondLevelMaskImage = BOND_MASK_IMAGES[bondLevel]
+        _, _, _, bondLevelResult, bondLevelResults = subimageScaledSearch(bondImage, bondLevelTemplateImage, bondLevelMaskImage, imageScale)
+        
 
-    print(studentBond)
-    
-    return studentBond
+        if bondLevelResult < BOND_MATCH_THRESHOLD:
+            
+        
+        if bondLevel in BOND_CHEAT_SHEET[COUNTER]:
+            print(str(bondLevel), ":", str(bondLevelResult) + " ✓")
+            global HIGHEST_HIT
+            if bondLevelResult > HIGHEST_HIT:
+                HIGHEST_HIT = bondLevelResult
+        else:
+            if bondLevelResult < 0.1:
+                print(str(bondLevel), ":", str(bondLevelResult))
+                global LOWEST_MISS
+                if bondLevelResult < LOWEST_MISS:
+                    LOWEST_MISS = bondLevelResult
+    return 1
 
 
 def getStudentLevel(processedStatsImage, imageScale):
@@ -1130,56 +1239,24 @@ def getStarCount(sourceImage, sourceStarMaskImage, imageScale, starTemplateImage
     return studentStar
 
 
-directory = "student example ipad"
+directory = "student example"
 scale = 1.0
-##for fileName in os.listdir(directory):
-##    f = os.path.join(directory, fileName)
-##
-##    
-##    sourceImage = cv2.imread(f, cv2.IMREAD_COLOR)
-####    _, _, _, scale, _ = subimageMultiScaleSearch(sourceImage, EQUIPMENT_TEMPLATE_IMAGE, EQUIPMENT_MASK_IMAGE)
-##
-##    
-##    print(f)
-##    getStudentStats(sourceImage, scale)
+for fileName in os.listdir(directory):
+    f = os.path.join(directory, fileName)
 
-sourceImage = cv2.imread(r"student example ipad\nodoka ipad.png", cv2.IMREAD_COLOR)
-getStudentStats(sourceImage, scale)
+    sourceImage = cv2.imread(f, cv2.IMREAD_COLOR)
+
+    if "ipad" in f:
+        scale = 1.0
+    else:
+        _, _, _, scale, _ = subimageMultiScaleSearch(sourceImage, EQUIPMENT_TEMPLATE_IMAGE, EQUIPMENT_MASK_IMAGE)
     
-
-######### STAT READER #########
-##hibikiStats = cv2.imread("maki stats.png", cv2.IMREAD_COLOR)
-##processedHibiki = processImage(hibikiStats)
+    print(f, scale)
+    
+    getStudentStats(sourceImage, scale)
 ##
-##hibikiStars = processImage(hibikiStars)
-##hibikiHeart = processImage(hibikiHeart)
-##hibikiLevel = processImage(hibikiLevel)
-##hibikiName  = processImage(hibikiName)
-##
-##startPoint = (0, 0)         # start at the first pixel
-##newColor = (255, 255, 255, 255)   # color to flood with
-##cv2.floodFill(hibikiHeart, None, startPoint, newColor)
-##hibikiHeart = np.invert(hibikiHeart)
-##
-##
-##cv2.imshow("processedHibiki", processedHibiki)
-##print(convertImageToString(processedHibiki))
-##
-##cv2.imshow("hibikiLevel", hibikiLevel)
-##print("hibikiLevel: ", convertImageToString(hibikiLevel))
-##
-##cv2.imshow("hibikiHeart", hibikiHeart)
-##print("hibikiHeart: ", convertImageToString(hibikiHeart))
-##
-##cv2.imshow("hibikiStars", hibikiStars)
-##print("hibikiStars: ", convertImageToString(hibikiStars))
-##
-##cv2.imshow("hibikiName", hibikiName)
-##print("hibikiName: ", convertImageToString(hibikiName))
-##
-##hibikiHeartName = cv2.bitwise_or(hibikiName, hibikiHeart)
-##cv2.imshow("hibikiHeartName", hibikiHeartName)
-##print("hibikiHeartName: ", convertImageToString(hibikiHeartName))
+##sourceImage = cv2.imread(r"student example ipad\nodoka ipad.png", cv2.IMREAD_COLOR)
+##getStudentStats(sourceImage, scale)
 
 
 
