@@ -5,8 +5,27 @@ import random
 import numpy as np
 from pytesseract import pytesseract
 
+
+
+NAME_ADDITION_IMAGE = cv2.imread("name addition.png", cv2.IMREAD_GRAYSCALE)
+
+
+
 BOND_CHEAT_SHEET_IPAD = [[2,0],[2,0],[1,4],[2,2],[1,6],[2,2],[1,9],[1,9],[1],[1,3],[2,2],[2,0],[2,0],[2,0],[1,8],[1,7],[1,4],[2,0],[2,0],[1,2],[2,0],[2,0],[2,0],[2,0],[2,0],[1,8],[1,5],[1,7],[4]]
-BOND_CHEAT_SHEET = [[2,0],[2,0],[2,0],[2,0],[1,4],[2,2],[1,6],[2,2],[1,9],[1,9],[6],[2],[2],[1],[1,3],[2,2],[2,0],[2,0],[2,0],[1,8],[2,4],[2,4],[8],[1,7],[1,4],[2,0],[2,3],[2,0],[1,2],[2,0],[2,0],[2,0],[2,0],[2,0],[1,8],[1,5],[1,7],[4]]
+##BOND_CHEAT_SHEET = [[2,0],[2,0],[2,0],[2,0],[1,4],[2,2],[1,6],[2,2],[1,9],[1,9],[6],[2],[2],[1],[1,3],[2,2],[2,0],[2,0],[2,0],[1,8],[2,4],[2,4],[8],[1,7],[1,4],[2,0],[2,3],[2,0],[1,2],[2,0],[2,0],[2,0],[2,0],[2,0],[1,8],[1,5],[1,7],[4]]
+BOND_CHEAT_SHEET = [20,20,9,20,20,14,22,16,22,19,19,6,6,2,2,1,13,22,20,20,20,18,24,24,8,17,14,20,23,8,20,12,20,20,17,20,20,20,18,15,17,4]
+SCALE_CHEAT_SHEET = [ 1.0, 0.8999999999999999, 1.0, 0.8999999999999999, 1.0, 1.0, 1.0, 1.0 ,1.0, 1.0, 1.0, 1.0, \
+                      0.8899999999999999, 0.8899999999999999, 0.8899999999999999, 1.0, 1.0, 1.0, 1.0, 1.0, \
+                      1.0, 1.0, 0.8899999999999999, 0.5086363636363634, 0.8899999999999999, 1.0, 1.0, 1.0, \
+                      0.8899999999999999, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+LEVEL_CHEAT_SHEET = [1,1,1,80,9,3,80,35,75,1,5,80,1,1,1,1,75,80,10,71,7,38,80,80,1,6,15,1,80,76,45,70,\
+                     35,8,75,2,35,12,4,1,75,75]
+STAR_CHEAT_SHEET = [5,4,3,5,3,3,5,3,5,4,4,5,2,1,1,1,3,5,3,4,4,3,5,5,3,5,4,3,5,3,4,3,4,5,5,3,4,5,4,4,3,3]
+
+STUDENT_CHEAT_SHEET = [[1.0, "Airi", 20, 5, 1], [0.8999999999999999, "Airi", 20, 4, 1], [1.0, "Akane (Bunny)", 9, 3, 1], [0.8999999999999999, "Akane", 20, 5, 80], \
+                       [1.0, "Ayane", 20, 3, 9], [1.0, "Ayane (Swimsuit)", 14, 3, 3], [1.0, "Cherino", 22, 5, 80], [1.0, "Chihiro", 16, 3, 35],\
+                       [1.0, "Hanae", 22, 5, 75], [1.0, "Hanako", 19, 4, 1], [1.0, "Hanako", 19, 4, 1]]
+
 COUNTER = 0
 
 PATH_TO_TESSERACT = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
@@ -17,9 +36,20 @@ BAD_COUNTER_MAX = 150000
 UE_STAR_THRESHOLD = 0.03
 OVERLAP_THRESHOLD = 0.35
 
+
 # min miss: 0.05623598396778107
 # max hit: 0.038083869963884354
 BOND_MATCH_THRESHOLD = 0.045
+
+# min miss: 0.072
+# max hit: 0.068
+LEVEL_MATCH_THRESHOLD = 0.07
+
+# min miss: 0.92121212
+# max hit: 0.36
+BOND_OVERLAP_THRESHOLD = 0.5
+LEVEL_OVERLAP_THRESHOLD = 0.5
+
 
 # min miss:     0.612736701965332
 # average miss: 0.72706709057093
@@ -27,17 +57,20 @@ BOND_MATCH_THRESHOLD = 0.045
 # average hit:  0.036196497934567
 E_MATCH_THRESHOLD = 0.3
 
+
 # min miss:     0.0605535731
 # average miss: 0.069173962343484
 # max hit:      0.0261527728
 # average hit:  0.0080085342507
 TIER_MATCH_THRESHOLD = 0.055
 
+
 # max hit:     0.019280406
 # average hit: 0.010435626252381
 STAR_MATCH_THRESHOLD = 0.25
 STAR_OVERLAP_THRESHOLD = 0.35
 SCALE_INCREMENT = 0.01
+
 
 # ccorr is bad because "we're dealing with discrete digital signals that have a
 # defined maximum value (images), that means that a bright white patch of the image will basically
@@ -56,9 +89,9 @@ GEAR_SLOT_LEVEL_REQUIREMENTS = [0, 15, 35]
 STATS_TEMPLATE_IMAGE = cv2.imread("stats template.png", cv2.IMREAD_COLOR)
 STATS_MASK_IMAGE = cv2.imread("stats mask.png", cv2.IMREAD_GRAYSCALE)
 
-STATS_BOND_NAME_MASK_IMAGE = cv2.imread("stats bond name mask.png", cv2.IMREAD_GRAYSCALE)
-BOND_MASK_IMAGE = cv2.imread("bond mask.png", cv2.IMREAD_GRAYSCALE)
-NAME_MASK_IMAGE = cv2.imread("name mask.png", cv2.IMREAD_GRAYSCALE)
+##STATS_BOND_NAME_MASK_IMAGE = cv2.imread("stats bond name mask.png", cv2.IMREAD_GRAYSCALE)
+##BOND_MASK_IMAGE = cv2.imread("bond mask.png", cv2.IMREAD_GRAYSCALE)
+##NAME_MASK_IMAGE = cv2.imread("name mask.png", cv2.IMREAD_GRAYSCALE)
 STATS_NAME_MASK_IMAGE = cv2.imread("stats name mask.png", cv2.IMREAD_GRAYSCALE)
 STATS_BOND_MASK_IMAGE = cv2.imread("stats bond mask.png", cv2.IMREAD_GRAYSCALE)
 STATS_LEVEL_MASK_IMAGE = cv2.imread("stats level mask.png", cv2.IMREAD_GRAYSCALE)
@@ -359,7 +392,7 @@ def createMaskFromTransparency(image):
 
 # given two images, and optional offsets, combine two images together,
 # blending in their transparencies and return it
-def combineTransparentImages(bgImage, fgImage, xOffset = 0, yOffset = 0):
+def overlapTransparentImages(bgImage, fgImage, xOffset = 0, yOffset = 0):
     # get dimensions of our subarea, which is the fgImage
     fgImageWidth = fgImage.shape[1]
     fgImageHeight = fgImage.shape[0]
@@ -476,6 +509,46 @@ def processBondImage(statsImage):
     return bond, name
 
 
+def horizontalConcantenateImages(image1, image2):
+    image1Height = image1.shape[0]
+    image2Height = image2.shape[0]
+    
+    if image1Height > image2Height:
+        scale = image1H
+    imageScale = max()/min()
+    
+    
+    return concatenatedImage
+    
+
+
+
+def cropAndProcessNameImage(statsImage, imageScale, statsNameMaskImage, nameAdditionImage):
+    # crop the source according to our mask
+    nameImage = cropImageWithMask(statsImage, statsNameMaskImage)
+    
+    # resize our addition image to match nameImage's height
+    resizedNameAdditionImage = scaleImage(nameAdditionImage, imageScale)
+    resizedNameAdditionImage = cv2.resize(resizedNameAdditionImage, (resizedNameAdditionImage.shape[1], nameImage.shape[0]))
+    
+    # process our nameImage
+    grayNameImage = cv2.cvtColor(nameImage, cv2.COLOR_BGR2GRAY)
+    processedNameImage = cv2.threshold(grayNameImage, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+    
+    # combine the pictures
+    x1 = resizedNameAdditionImage.shape[1]
+    x2 = x1 + processedNameImage.shape[1]
+    
+    processedImage = np.zeros((resizedNameAdditionImage.shape[0], x2), np.uint8)
+    processedImage[:, :x1]   = resizedNameAdditionImage[:,:]
+    processedImage[:, x1:x2] = processedNameImage[:,:]
+    
+    #cv2.imshow("processedImage", processedImage)
+    
+
+    return processedImage
+
+    
 
 # given an image, process it to remove noise and then return
 # the image with only the level showing
@@ -603,10 +676,10 @@ def processImage(colorImage, maskImage = None):
         processedImage2 = cv2.bitwise_and(processedImage2, maskImage)
         processedImage3 = cv2.bitwise_and(processedImage3, maskImage)
         processedImage4 = cv2.bitwise_and(processedImage4, maskImage)
-    blankImage1 = cropImageWithMask(blankImage1, STATS_BOND_NAME_MASK_IMAGE)
-    blankImage2 = cropImageWithMask(blankImage2, STATS_BOND_NAME_MASK_IMAGE)
-    blankImage3 = cropImageWithMask(blankImage3, STATS_BOND_NAME_MASK_IMAGE)
-    blankImage4 = cropImageWithMask(blankImage4, STATS_BOND_NAME_MASK_IMAGE)
+##    blankImage1 = cropImageWithMask(blankImage1, STATS_BOND_NAME_MASK_IMAGE)
+##    blankImage2 = cropImageWithMask(blankImage2, STATS_BOND_NAME_MASK_IMAGE)
+##    blankImage3 = cropImageWithMask(blankImage3, STATS_BOND_NAME_MASK_IMAGE)
+##    blankImage4 = cropImageWithMask(blankImage4, STATS_BOND_NAME_MASK_IMAGE)
         #cv2.imshow("6", processedImage)
 
 
@@ -688,9 +761,9 @@ def returnErrAndDiff(template_img, subimage):
 # filter out results that have major overlap to avoid repeated hits
 def nms(matchResults, matchLocations, matchWidth, matchHeight, overlapThreshold):
     # unpack our arrays
-    x1MatchCoordinates = matchLocations[1]
+    x1MatchCoordinates = matchLocations[:,0]
     x2MatchCoordinates = x1MatchCoordinates + matchWidth
-    y1MatchCoordinates = matchLocations[0]
+    y1MatchCoordinates = matchLocations[:,1]
     y2MatchCoordinates = y1MatchCoordinates + matchHeight
     
     # determine which order to run through the results/coordinates.
@@ -705,17 +778,15 @@ def nms(matchResults, matchLocations, matchWidth, matchHeight, overlapThreshold)
     else:
         indexOrder = np.argsort(matchResults)[::-1]
     
-    # get the area of the box. they should all be the same area
-    matchArea = matchWidth * matchHeight
-
     # create an array to store our overlap percentages
     overlap = []
-
-    # array to store the coordinates of our best matches, filtering out overlappers
-    bestMatchLocations = []
-    bestMatches = []
     
-
+    # array to store the coordinates of our best matches, filtering out overlappers
+    nmsResults = []
+    nmsLocations = []
+    nmsOrder = []
+    
+    
     # go through all our boxes starting with highest match to lowest match.
     # grab the coordinates of that box and store it into our filtered list.
     # go through the rest of the coordinates to see if any of them have overlap.
@@ -724,16 +795,20 @@ def nms(matchResults, matchLocations, matchWidth, matchHeight, overlapThreshold)
         # get the index to work with. should be our current highest match result
         # which should be the first item in the list.
         bestMatchIndex = indexOrder[0]
-
+        
         # get the location of the current best match and add it to our bestMatchLocations list
         x1BestMatchCoordinate = x1MatchCoordinates[bestMatchIndex]
         x2BestMatchCoordinate = x2MatchCoordinates[bestMatchIndex]
         y1BestMatchCoordinate = y1MatchCoordinates[bestMatchIndex]
         y2BestMatchCoordinate = y2MatchCoordinates[bestMatchIndex]
         
-        bestMatchLocations.append((x1BestMatchCoordinate, y1BestMatchCoordinate))
-        bestMatches.append(matchResults[bestMatchIndex])
-
+        bestMatchWidth = x2BestMatchCoordinate - x1BestMatchCoordinate
+        bestMatchHeight = y2BestMatchCoordinate - y1BestMatchCoordinate
+        bestMatchArea = bestMatchWidth * bestMatchHeight
+        
+        nmsResults.append(matchResults[bestMatchIndex])
+        nmsLocations.append((x1BestMatchCoordinate, y1BestMatchCoordinate))
+        
         ## determine the overlap of the other matches with the current match.
         ## to find the overlapping area, the x and y values should be furthest away
         ## from the edges of the original. if comparing our x1 (top left) coordinate,
@@ -753,48 +828,72 @@ def nms(matchResults, matchLocations, matchWidth, matchHeight, overlapThreshold)
         overlapWidths  = np.maximum(0, x2OverlapCoordinates - x1OverlapCoordinates)
         overlapHeights = np.maximum(0, y2OverlapCoordinates - y1OverlapCoordinates)
         overlapAreas = overlapWidths * overlapHeights
-
+        
         # calculate the percentage of overlap with our matched area
-        overlapPercentages = overlapAreas / matchArea
+        overlapPercentages = overlapAreas / bestMatchArea
 
+##        print("overlap", overlapPercentages)
+        
         # delete the indices of matches where the overlap is over a certain threshold.
         # in this case, we delete the entries of the indicies so we don't
         # iterate over them later. also delete the one we just worked on cause it's done
         indexDelete = np.where(overlapPercentages > overlapThreshold)[0]
-        if bestMatchIndex not in indexDelete:
-            indexDelete = np.append(indexDelete, bestMatchIndex)
-        
         indexOrder = np.setdiff1d(indexOrder, indexDelete, True)
         
-
+        nmsOrder.append(bestMatchIndex)
+    
+    nmsLocations = np.reshape(nmsLocations, (-1, 2))
+    
+    nmsCount = len(nmsResults)
+    
     # return the coordinates of the filtered boxes
-    return bestMatchLocations, bestMatches
+    return nmsResults, nmsLocations, nmsCount, nmsOrder
+
+
+def filterResultsAndLocations(imageResults, imageWidth, imageHeight, matchThreshold, overlapThreshold):
+    filteredResults = np.extract(imageResults <= matchThreshold, imageResults)
+    (filteredYLocations, filteredXLocations) = np.where(imageResults <= matchThreshold)
+
+    filteredLocations = np.column_stack((filteredXLocations, filteredYLocations))
+    
+    
+##    print("filteredResults", filteredResults)
+##    print("filteredLocations", filteredLocations)
+    
+    # filter out the results even more to remove matches that overlap with our best matches
+    nmsResults, nmsLocations, nmsCount, nmsOrder = nms(filteredResults, filteredLocations, imageWidth, imageHeight, overlapThreshold)
+
+##    print("nmsResults", nmsResults)
+##    print("nmsLocations", nmsLocations)
+    
+    return nmsResults, nmsLocations, nmsCount, nmsOrder
 
 
 #
 def runAllTemplateMatchingMethods(graySourceImage, grayTemplateImage, maskImage):
-    bestMatchVal = 0
+    if method == cv2.TM_SQDIFF or method == cv2.TM_SQDIFF_NORMED:
+        bestMatchVal = float("inf")
+    else:
+        bestMatchVal = 0
+
     bestMatchResult = []
+    
     
     for method in TEMPLATE_MATCH_METHODS_ARRAY:
         matchResult = cv2.matchTemplate(graySourceImage, grayTemplateImage, method, mask = maskImage)
-        _, maxVal, _, maxLoc = cv2.minMaxLoc(matchResult)
-        
+        minVal, maxVal, minLoc, maxLoc = cv2.minMaxLoc(matchResult)
 
-##        x1 = maxLoc[0]
-##        x2 = x1 + grayTemplateImage.shape[1]
-##        y1 = maxLoc[1]
-##        y2 = y1 + grayTemplateImage.shape[0]
-##        subimage = graySourceImage[y1:y2, x1:x2]
-##        cv2.imshow(str(time.time()), subimage)
-        
-        
-
-        if maxVal > bestMatchVal:
-            bestMatchVal = maxVal
-            bestMatchResult = matchResult
-            bestMethod = method
-
+        if method == cv2.TM_SQDIFF or method == cv2.TM_SQDIFF_NORMED:
+            if minVal < bestMatchVal:
+                bestMatchVal = minVal
+                bestMatchResult = matchResult
+                bestMethod = method
+        else:
+            if maxVal > bestMatchVal:
+                bestMatchVal = maxVal
+                bestMatchResult = matchResult
+                bestMethod = method
+    
     return bestMatchResult, str(bestMethod)
     
 
@@ -1132,15 +1231,29 @@ def getStudentStats(sourceImage, imageScale):
 ##    processedStatsSubimage = processBondImage(statsSubimage)
 ##    cv2.imshow("processedStatsSubimage", processedStatsSubimage)
     
-##    studentName = getStudentName(processedStatsSubimage, imageScale)
-    studentBond = getStudentBond(statsSubimage, imageScale)
-    global COUNTER
-    COUNTER += 1
-##    studentLevel = getStudentLevel(processedStatsSubimage, imageScale)
-##    studentStar = getStarCount(statsSubimage, STATS_STAR_MASK_IMAGE, imageScale, STAR_TEMPLATE_IMAGE, STAR_MASK_IMAGE, STAR_MATCH_THRESHOLD)
-
-##    print(studentName, studentBond, studentStar, studentLevel)
+    studentName = getStudentName(statsSubimage, imageScale, STATS_NAME_MASK_IMAGE, NAME_ADDITION_IMAGE)
+    studentBond = getStatsLevels(statsSubimage, imageScale, STATS_BOND_MASK_IMAGE, BOND_TEMPLATE_IMAGES, BOND_MASK_IMAGES, BOND_MATCH_THRESHOLD, BOND_OVERLAP_THRESHOLD)
+    studentLevel = getStatsLevels(statsSubimage, imageScale, STATS_LEVEL_MASK_IMAGE, LEVEL_TEMPLATE_IMAGES, LEVEL_MASK_IMAGES, LEVEL_MATCH_THRESHOLD, LEVEL_OVERLAP_THRESHOLD)
+    studentStar = getStarCount(statsSubimage, imageScale, STATS_STAR_MASK_IMAGE, STAR_TEMPLATE_IMAGE, STAR_MASK_IMAGE, STAR_MATCH_THRESHOLD, STAR_OVERLAP_THRESHOLD)
     
+    global COUNTER
+    
+    print(studentName)
+    
+    if BOND_CHEAT_SHEET[COUNTER] != studentBond:
+        print("cheat bond:", BOND_CHEAT_SHEET[COUNTER])
+        print("stud bond:", studentBond)
+
+    if LEVEL_CHEAT_SHEET[COUNTER] != studentLevel:
+        print("cheat level:", LEVEL_CHEAT_SHEET[COUNTER])
+        print("student level:", studentLevel)
+
+    if STAR_CHEAT_SHEET[COUNTER] != studentStar:
+        print("cheat star:", STAR_CHEAT_SHEET[COUNTER])
+        print("student star:", studentStar)
+    
+    
+    COUNTER += 1
     return 1
 
 
@@ -1148,68 +1261,89 @@ def getStudentStats(sourceImage, imageScale):
 HIGHEST_HIT = 0
 LOWEST_MISS = 1
 
-def getStudentName(processedStatsImage, imageScale):
-    processedNameSubimage = cropImageWithMask(processedStatsImage, STATS_NAME_MASK_IMAGE)
+def getStudentName(statsImage, imageScale, statsNameMaskImage, nameAdditionImage):
+    processedNameSubimage = cropAndProcessNameImage(statsImage, imageScale, statsNameMaskImage, nameAdditionImage)
     
     studentName = convertImageToString(processedNameSubimage)
     
     return studentName
 
 
-def getStudentBond(statsImage, imageScale):
-    bondImage = cropImageWithMask(statsImage, STATS_BOND_MASK_IMAGE)
-    
-    for bondLevel in range(10):
-        bondLevelTemplateImage = BOND_TEMPLATE_IMAGES[bondLevel]
-        bondLevelMaskImage = BOND_MASK_IMAGES[bondLevel]
-        _, _, _, bondLevelResult, bondLevelResults = subimageScaledSearch(bondImage, bondLevelTemplateImage, bondLevelMaskImage, imageScale)
-        
 
-        if bondLevelResult < BOND_MATCH_THRESHOLD:
+
+
+def getStatsLevels(statsImage, imageScale, statsLevelsMaskImage, levelTemplateImages, levelMaskImages, matchThreshold, overlapThreshold):
+    # crop out your target area from the stats image given a mask
+    statsLevelsImage = cropImageWithMask(statsImage, statsLevelsMaskImage)
+    
+    # lists to keep track of our matches
+    levelsWidths = []            # widths of the TM'ed level subimages
+    levelsHeights = []           # heights of the TM'ed level subimages
+    levelsNMSResults = []   # nms-filtered match results that passed our threshold
+    levelsNMSLocations = [] # locations of said matches
+    levelsNMSMatches = []   # the level template of the match (0-9)
+    
+    # go through range 0-9 and tm for the respective level template
+    for level in range(10):
+        # get the current level template and mask
+        levelTemplateImage = levelTemplateImages[level]
+        levelMaskImage = levelMaskImages[level]
+        
+        # TM for it in our levelsSubimage
+        levelSubimage, levelSubimageWidth, levelSubimageHeight, levelSubimageResult, levelSubimageResults = subimageScaledSearch(statsLevelsImage, levelTemplateImage, levelMaskImage, imageScale)
+        
+        # if the best result is below our threshold, filter our results and record them
+        if levelSubimageResult < matchThreshold:
+            # filter our results through NMS
+            nmsResults, nmsLocations, levelCount, _ = filterResultsAndLocations(levelSubimageResults, levelSubimageWidth, levelSubimageHeight, matchThreshold, overlapThreshold)
             
-        
-        if bondLevel in BOND_CHEAT_SHEET[COUNTER]:
-            print(str(bondLevel), ":", str(bondLevelResult) + " ✓")
-            global HIGHEST_HIT
-            if bondLevelResult > HIGHEST_HIT:
-                HIGHEST_HIT = bondLevelResult
-        else:
-            if bondLevelResult < 0.1:
-                print(str(bondLevel), ":", str(bondLevelResult))
-                global LOWEST_MISS
-                if bondLevelResult < LOWEST_MISS:
-                    LOWEST_MISS = bondLevelResult
-    return 1
-
-
-def getStudentLevel(processedStatsImage, imageScale):
-    processedLevelSubimage = cropImageWithMask(processedStatsImage, STATS_LEVEL_MASK_IMAGE)
-
-    studentLevel = convertImageToString(processedLevelSubimage)
+            ## record our results
+            # the reason why we extend widths, heights, and matches multiple times is because
+            # results and locations may have multiple values. so we extend these ones by the
+            # resultCount(levelCount) for when we start to furtther filter values from our arrays.
+            levelsWidths.extend([levelSubimageWidth] * levelCount)
+            levelsHeights.extend([levelSubimageHeight] * levelCount)
+            levelsNMSResults.extend(nmsResults)
+            levelsNMSLocations.extend(nmsLocations)
+            levelsNMSMatches.extend([level] * levelCount)
     
-    return studentLevel
+    # convert our lists to np arrays for coding purposes
+    levelsWidths = np.array(levelsWidths)
+    levelsHeights = np.array(levelsHeights)
+    levelsNMSResults = np.array(levelsNMSResults)
+    levelsNMSLocations = np.array(levelsNMSLocations)
+    levelsNMSMatches = np.array(levelsNMSMatches)
+    
+    # further filter our results. do so because sometimes numbers like "1" will TM to "4"s, and "5"s and "6"s, or "3"s and "8"s.
+    # so with our array of all our matches thrown together, we filter it to make sure that we only have the best matches + no overlap.
+    # a 3 should have a better match to 3 than 8 would to 3, so the 3 has priority. then we filter matches that have significatn overlap with the 3 (the 8)
+    nms2Results, nms2Locations, levelCount, nms2Order = nms(levelsNMSResults, levelsNMSLocations, levelsWidths, levelsHeights, overlapThreshold)
+    
+    # extract only our x coordinates from our locations array
+    nms2XCoordinates = nms2Locations[:, 0]
+    
+    # nms2Order is an array of levelsNMSResults' indices of nms2Results values.
+    # nms2Order is ordered in the order of nms2Results.
+    # for example, if levelsNmsResults = [a, b, c, d, e, f] and nsm2Results = [f, b, d],
+    # then nms2Order = [5, 1, 3].
+    nms2Matches = levelsNMSMatches[nms2Order]
+    
+    # we order our nms2Matches by the x-coordinates, cause we read the level from left-to-right
+    levelOrder = np.argsort(nms2XCoordinates)
+    
+    # put our level string together
+    statsLevels = ""
+    
+    for levelIndex in levelOrder:
+        statsLevels += str(nms2Matches[levelIndex])
+    
+    statsLevels = int(statsLevels)
+    
+    return statsLevels
 
 
-##def getStudentStats(statsImage, imageScale):
-##    processedStatsSubimage = processImage(statsImage)
-##    cv2.imshow("processedStatsSubimage", processedStatsSubimage)
-##    
-##    studentStats = []
-##    
-##    for statsInfoMaskImage in STATS_INFO_MASK_IMAGES:
-##        processedStatsInfoSubimage = cropImageWithMask(processedStatsSubimage, statsInfoMaskImage)
-##        
-##        studentStat = convertImageToString(processedStatsInfoSubimage)
-##        
-##        studentStats.append(studentStat)
-##
-##    
-##
-##    return studentStats
 
-
-
-def getStarCount(sourceImage, sourceStarMaskImage, imageScale, starTemplateImage, starMaskImage, starMatchThreshold):
+def getStarCount(sourceImage, imageScale, sourceStarMaskImage, starTemplateImage, starMaskImage, starMatchThreshold, starOverlapThreshold):
     # given the stats subimage, crop out the area where the stars should be using our mask
     sourceStarSubimage = cropImageWithMask(sourceImage, sourceStarMaskImage)
     
@@ -1217,11 +1351,7 @@ def getStarCount(sourceImage, sourceStarMaskImage, imageScale, starTemplateImage
     _, starSubimageWidth, starSubimageHeight, _, starSubimageResults = subimageScaledSearch(sourceStarSubimage, starTemplateImage, starMaskImage, imageScale)
     
     # filter our results to be below the threshold and grab the coordinates of those matches
-    filteredStarResults = np.extract(starSubimageResults <= starMatchThreshold, starSubimageResults)
-    filteredStarLocations = np.where(starSubimageResults <= starMatchThreshold)
-    
-    # filter out the results even more to remove matches that overlap with our best matches
-    nmsStarLocations, nmsStarResults = nms(filteredStarResults, filteredStarLocations, starSubimageWidth, starSubimageHeight, STAR_OVERLAP_THRESHOLD)
+    nmsStarResults, nmsStarLocations, nmsStarCount, _ = filterResultsAndLocations(starSubimageResults, starSubimageWidth, starSubimageHeight, starMatchThreshold, starOverlapThreshold)
     
 ##    for index in range(len(nmsStarLocations)):
 ##        print(nmsStarLocations[index])
@@ -1233,10 +1363,7 @@ def getStarCount(sourceImage, sourceStarMaskImage, imageScale, starTemplateImage
 ##    sourceStarSubimage = scaleImage(sourceStarSubimage, 5)
 ##    cv2.imshow(str(time.time()), sourceStarSubimage)
     
-    # the amount of nms-filtered results is the amount of stars we have
-    studentStar = len(nmsStarResults)
-    
-    return studentStar
+    return nmsStarCount
 
 
 directory = "student example"
@@ -1246,18 +1373,12 @@ for fileName in os.listdir(directory):
 
     sourceImage = cv2.imread(f, cv2.IMREAD_COLOR)
 
-    if "ipad" in f:
-        scale = 1.0
-    else:
-        _, _, _, scale, _ = subimageMultiScaleSearch(sourceImage, EQUIPMENT_TEMPLATE_IMAGE, EQUIPMENT_MASK_IMAGE)
-    
+    scale = SCALE_CHEAT_SHEET[COUNTER]
+
+        
     print(f, scale)
     
     getStudentStats(sourceImage, scale)
-##
-##sourceImage = cv2.imread(r"student example ipad\nodoka ipad.png", cv2.IMREAD_COLOR)
-##getStudentStats(sourceImage, scale)
-
 
 
 ######### getting UE stars #############
