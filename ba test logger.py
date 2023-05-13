@@ -6,20 +6,26 @@ import numpy as np
 from pytesseract import pytesseract
 
 
+MAX_HIT = 0
+MIN_MISS = float("inf")
 
 NAME_ADDITION_IMAGE = cv2.imread("name addition.png", cv2.IMREAD_GRAYSCALE)
 
 
 
 BOND_CHEAT_SHEET_IPAD = [[2,0],[2,0],[1,4],[2,2],[1,6],[2,2],[1,9],[1,9],[1],[1,3],[2,2],[2,0],[2,0],[2,0],[1,8],[1,7],[1,4],[2,0],[2,0],[1,2],[2,0],[2,0],[2,0],[2,0],[2,0],[1,8],[1,5],[1,7],[4]]
-##BOND_CHEAT_SHEET = [[2,0],[2,0],[2,0],[2,0],[1,4],[2,2],[1,6],[2,2],[1,9],[1,9],[6],[2],[2],[1],[1,3],[2,2],[2,0],[2,0],[2,0],[1,8],[2,4],[2,4],[8],[1,7],[1,4],[2,0],[2,3],[2,0],[1,2],[2,0],[2,0],[2,0],[2,0],[2,0],[1,8],[1,5],[1,7],[4]]
+BOND_CHEAT_SHEET_ARRAY = [[2,0],[2,0],[9],[2,0],[2,0],[1,4],[2,2],[1,6],[2,2],[1,9],[1,9],[6],[6],[2],[2],[1],[1,3],[2,2],[2,0],[2,0],[2,0],[1,8],[2,4],[2,4],[8],[1,7],[1,4],[2,0],[2,3],[8],\
+                          [2,0],[1,2],[2,0],[2,0],[1,7],[2,0],[2,0],[2,0],[1,8],[1,5],[1,7],[4]]
 BOND_CHEAT_SHEET = [20,20,9,20,20,14,22,16,22,19,19,6,6,2,2,1,13,22,20,20,20,18,24,24,8,17,14,20,23,8,20,12,20,20,17,20,20,20,18,15,17,4]
+
 SCALE_CHEAT_SHEET = [ 1.0, 0.8999999999999999, 1.0, 0.8999999999999999, 1.0, 1.0, 1.0, 1.0 ,1.0, 1.0, 1.0, 1.0, \
                       0.8899999999999999, 0.8899999999999999, 0.8899999999999999, 1.0, 1.0, 1.0, 1.0, 1.0, \
                       1.0, 1.0, 0.8899999999999999, 0.5086363636363634, 0.8899999999999999, 1.0, 1.0, 1.0, \
                       0.8899999999999999, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
 LEVEL_CHEAT_SHEET = [1,1,1,80,9,3,80,35,75,1,5,80,1,1,1,1,75,80,10,71,7,38,80,80,1,6,15,1,80,76,45,70,\
                      35,8,75,2,35,12,4,1,75,75]
+LEVEL_CHEAT_SHEET_ARRAY = [[1],[1],[1],[8,0],[9],[3],[8,0],[3,5],[7,5],[1],[5],[8,0],[1],[1],[1],[1],[7,5],[8,0],[1,0],[7,1],[7],[3,8],[8,0],[8,0],[1],\
+                           [6],[1,5],[1],[8,0],[7,6],[4,5],[7,0],[3,5],[8],[7,5],[2],[3,5],[1,2],[4],[1],[7,5],[7,5]]
 STAR_CHEAT_SHEET = [5,4,3,5,3,3,5,3,5,4,4,5,2,1,1,1,3,5,3,4,4,3,5,5,3,5,4,3,5,3,4,3,4,5,5,3,4,5,4,4,3,3]
 
 STUDENT_CHEAT_SHEET = [[1.0, "Airi", 20, 5, 1], [0.8999999999999999, "Airi", 20, 4, 1], [1.0, "Akane (Bunny)", 9, 3, 1], [0.8999999999999999, "Akane", 20, 5, 80], \
@@ -28,27 +34,64 @@ STUDENT_CHEAT_SHEET = [[1.0, "Airi", 20, 5, 1], [0.8999999999999999, "Airi", 20,
 
 COUNTER = 0
 
+
+
 PATH_TO_TESSERACT = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 GEAR_X_OFFSET = 4
 GEAR_Y_OFFSET = 6
 
 BAD_COUNTER_MAX = 150000
-UE_STAR_THRESHOLD = 0.03
-OVERLAP_THRESHOLD = 0.35
+SCALE_INCREMENT = 0.01
 
 
-# min miss: 0.05623598396778107
+
+## recorded the highest correct guess and lowest wrong guess
+# min miss: 0.04736049473285675
 # max hit: 0.038083869963884354
-BOND_MATCH_THRESHOLD = 0.045
+BOND_MATCH_THRESHOLD = 0.0427
 
-# min miss: 0.072
-# max hit: 0.068
+## recorded the highest value in overlapPercentages of values that were below 0.50 and the lowest value of those that were above 0.50
+## should remember that overlap is determined by the match threshold because match threshold is the initial filter
+# min miss: 0.9212121212121213
+# max hit: 0.4090909090909091
+BOND_OVERLAP_THRESHOLD = 0.665
+
+
+## same process as bond_match.
+## even with the match threshold being high, the nms should filter out the bad eggs... hopefully...
+# min miss: 0.060845356434583664
+# max hit: 0.061924394220113754
 LEVEL_MATCH_THRESHOLD = 0.07
 
-# min miss: 0.92121212
-# max hit: 0.36
-BOND_OVERLAP_THRESHOLD = 0.5
-LEVEL_OVERLAP_THRESHOLD = 0.5
+# same process and bond_overlap
+# min miss: 0.8625
+# max hit: 0.46153846153846156
+LEVEL_OVERLAP_THRESHOLD = 0.662
+
+
+## find the overlap threshold first then the match threshold.
+## i found the max-correct overlap and set my threshold somewhere above that.
+## then filtering with my new overlap threshold, i got the max-correct match and the min-incorrect match and made the match thresh.
+# min_miss: 0.7591266
+# max hit:  0.019280406
+STAR_MATCH_THRESHOLD = 0.1
+
+# max hit: 0.3488372093023256
+STAR_OVERLAP_THRESHOLD = 0.4
+
+
+## same process as star_match
+# min miss: 0.044682324
+# max hit: 0.010489287
+STAR_UE_MATCH_THRESHOLD = 0.0276
+
+# max hit: 0.22727273
+STAR_UE_OVERLAP_THRESHOLD = 0.3
+
+# my one wrong match: 0.04139775037765503
+# max_hit: 0.005240572150796652
+# average: 0.0013653720586955
+E_UE_MATCH_THRESHOLD = 0.01
 
 
 # min miss:     0.612736701965332
@@ -62,14 +105,11 @@ E_MATCH_THRESHOLD = 0.3
 # average miss: 0.069173962343484
 # max hit:      0.0261527728
 # average hit:  0.0080085342507
-TIER_MATCH_THRESHOLD = 0.055
+TIER_MATCH_THRESHOLD = 0.04
 
 
-# max hit:     0.019280406
-# average hit: 0.010435626252381
-STAR_MATCH_THRESHOLD = 0.25
-STAR_OVERLAP_THRESHOLD = 0.35
-SCALE_INCREMENT = 0.01
+
+
 
 
 # ccorr is bad because "we're dealing with discrete digital signals that have a
@@ -82,41 +122,17 @@ TEMPLATE_MATCH_METHOD = cv2.TM_SQDIFF_NORMED
 
 # array of what min level you need to be to unlock the respective gear slot. slot1=lvl0, slot2=lvl15, slot3=lvl35
 GEAR_SLOT_LEVEL_REQUIREMENTS = [0, 15, 35]
+UE_SLOT_STAR_REQUIREMENT = 5
 
 
-# TEMPLATE AND MASK IMAGES
-
+# STATS templates and masks
 STATS_TEMPLATE_IMAGE = cv2.imread("stats template.png", cv2.IMREAD_COLOR)
 STATS_MASK_IMAGE = cv2.imread("stats mask.png", cv2.IMREAD_GRAYSCALE)
 
-##STATS_BOND_NAME_MASK_IMAGE = cv2.imread("stats bond name mask.png", cv2.IMREAD_GRAYSCALE)
-##BOND_MASK_IMAGE = cv2.imread("bond mask.png", cv2.IMREAD_GRAYSCALE)
-##NAME_MASK_IMAGE = cv2.imread("name mask.png", cv2.IMREAD_GRAYSCALE)
 STATS_NAME_MASK_IMAGE = cv2.imread("stats name mask.png", cv2.IMREAD_GRAYSCALE)
 STATS_BOND_MASK_IMAGE = cv2.imread("stats bond mask.png", cv2.IMREAD_GRAYSCALE)
 STATS_LEVEL_MASK_IMAGE = cv2.imread("stats level mask.png", cv2.IMREAD_GRAYSCALE)
 
-BOND_MASK_IMAGES = []
-BOND_0_MASK_IMAGE = cv2.imread("bond 0 mask.png", cv2.IMREAD_GRAYSCALE)
-BOND_1_MASK_IMAGE = cv2.imread("bond 1 mask.png", cv2.IMREAD_GRAYSCALE)
-BOND_2_MASK_IMAGE = cv2.imread("bond 2 mask.png", cv2.IMREAD_GRAYSCALE)
-BOND_3_MASK_IMAGE = cv2.imread("bond 3 mask.png", cv2.IMREAD_GRAYSCALE)
-BOND_4_MASK_IMAGE = cv2.imread("bond 4 mask.png", cv2.IMREAD_GRAYSCALE)
-BOND_5_MASK_IMAGE = cv2.imread("bond 5 mask.png", cv2.IMREAD_GRAYSCALE)
-BOND_6_MASK_IMAGE = cv2.imread("bond 6 mask.png", cv2.IMREAD_GRAYSCALE)
-BOND_7_MASK_IMAGE = cv2.imread("bond 7 mask.png", cv2.IMREAD_GRAYSCALE)
-BOND_8_MASK_IMAGE = cv2.imread("bond 8 mask.png", cv2.IMREAD_GRAYSCALE)
-BOND_9_MASK_IMAGE = cv2.imread("bond 9 mask.png", cv2.IMREAD_GRAYSCALE)
-BOND_MASK_IMAGES.append(BOND_0_MASK_IMAGE)
-BOND_MASK_IMAGES.append(BOND_1_MASK_IMAGE)
-BOND_MASK_IMAGES.append(BOND_2_MASK_IMAGE)
-BOND_MASK_IMAGES.append(BOND_3_MASK_IMAGE)
-BOND_MASK_IMAGES.append(BOND_4_MASK_IMAGE)
-BOND_MASK_IMAGES.append(BOND_5_MASK_IMAGE)
-BOND_MASK_IMAGES.append(BOND_6_MASK_IMAGE)
-BOND_MASK_IMAGES.append(BOND_7_MASK_IMAGE)
-BOND_MASK_IMAGES.append(BOND_8_MASK_IMAGE)
-BOND_MASK_IMAGES.append(BOND_9_MASK_IMAGE)
 
 BOND_TEMPLATE_IMAGES = []
 BOND_0_TEMPLATE_IMAGE = cv2.imread("bond 0 template.png", cv2.IMREAD_COLOR)
@@ -140,27 +156,28 @@ BOND_TEMPLATE_IMAGES.append(BOND_7_TEMPLATE_IMAGE)
 BOND_TEMPLATE_IMAGES.append(BOND_8_TEMPLATE_IMAGE)
 BOND_TEMPLATE_IMAGES.append(BOND_9_TEMPLATE_IMAGE)
 
-LEVEL_MASK_IMAGES = []
-LEVEL_0_MASK_IMAGE = cv2.imread("level 0 mask.png", cv2.IMREAD_GRAYSCALE)
-LEVEL_1_MASK_IMAGE = cv2.imread("level 1 mask.png", cv2.IMREAD_GRAYSCALE)
-LEVEL_2_MASK_IMAGE = cv2.imread("level 2 mask.png", cv2.IMREAD_GRAYSCALE)
-LEVEL_3_MASK_IMAGE = cv2.imread("level 3 mask.png", cv2.IMREAD_GRAYSCALE)
-LEVEL_4_MASK_IMAGE = cv2.imread("level 4 mask.png", cv2.IMREAD_GRAYSCALE)
-LEVEL_5_MASK_IMAGE = cv2.imread("level 5 mask.png", cv2.IMREAD_GRAYSCALE)
-LEVEL_6_MASK_IMAGE = cv2.imread("level 6 mask.png", cv2.IMREAD_GRAYSCALE)
-LEVEL_7_MASK_IMAGE = cv2.imread("level 7 mask.png", cv2.IMREAD_GRAYSCALE)
-LEVEL_8_MASK_IMAGE = cv2.imread("level 8 mask.png", cv2.IMREAD_GRAYSCALE)
-LEVEL_9_MASK_IMAGE = cv2.imread("level 9 mask.png", cv2.IMREAD_GRAYSCALE)
-LEVEL_MASK_IMAGES.append(LEVEL_0_MASK_IMAGE)
-LEVEL_MASK_IMAGES.append(LEVEL_1_MASK_IMAGE)
-LEVEL_MASK_IMAGES.append(LEVEL_2_MASK_IMAGE)
-LEVEL_MASK_IMAGES.append(LEVEL_3_MASK_IMAGE)
-LEVEL_MASK_IMAGES.append(LEVEL_4_MASK_IMAGE)
-LEVEL_MASK_IMAGES.append(LEVEL_5_MASK_IMAGE)
-LEVEL_MASK_IMAGES.append(LEVEL_6_MASK_IMAGE)
-LEVEL_MASK_IMAGES.append(LEVEL_7_MASK_IMAGE)
-LEVEL_MASK_IMAGES.append(LEVEL_8_MASK_IMAGE)
-LEVEL_MASK_IMAGES.append(LEVEL_9_MASK_IMAGE)
+BOND_MASK_IMAGES = []
+BOND_0_MASK_IMAGE = cv2.imread("bond 0 mask.png", cv2.IMREAD_GRAYSCALE)
+BOND_1_MASK_IMAGE = cv2.imread("bond 1 mask.png", cv2.IMREAD_GRAYSCALE)
+BOND_2_MASK_IMAGE = cv2.imread("bond 2 mask.png", cv2.IMREAD_GRAYSCALE)
+BOND_3_MASK_IMAGE = cv2.imread("bond 3 mask.png", cv2.IMREAD_GRAYSCALE)
+BOND_4_MASK_IMAGE = cv2.imread("bond 4 mask.png", cv2.IMREAD_GRAYSCALE)
+BOND_5_MASK_IMAGE = cv2.imread("bond 5 mask.png", cv2.IMREAD_GRAYSCALE)
+BOND_6_MASK_IMAGE = cv2.imread("bond 6 mask.png", cv2.IMREAD_GRAYSCALE)
+BOND_7_MASK_IMAGE = cv2.imread("bond 7 mask.png", cv2.IMREAD_GRAYSCALE)
+BOND_8_MASK_IMAGE = cv2.imread("bond 8 mask.png", cv2.IMREAD_GRAYSCALE)
+BOND_9_MASK_IMAGE = cv2.imread("bond 9 mask.png", cv2.IMREAD_GRAYSCALE)
+BOND_MASK_IMAGES.append(BOND_0_MASK_IMAGE)
+BOND_MASK_IMAGES.append(BOND_1_MASK_IMAGE)
+BOND_MASK_IMAGES.append(BOND_2_MASK_IMAGE)
+BOND_MASK_IMAGES.append(BOND_3_MASK_IMAGE)
+BOND_MASK_IMAGES.append(BOND_4_MASK_IMAGE)
+BOND_MASK_IMAGES.append(BOND_5_MASK_IMAGE)
+BOND_MASK_IMAGES.append(BOND_6_MASK_IMAGE)
+BOND_MASK_IMAGES.append(BOND_7_MASK_IMAGE)
+BOND_MASK_IMAGES.append(BOND_8_MASK_IMAGE)
+BOND_MASK_IMAGES.append(BOND_9_MASK_IMAGE)
+
 
 LEVEL_TEMPLATE_IMAGES = []
 LEVEL_0_TEMPLATE_IMAGE = cv2.imread("level 0 template.png", cv2.IMREAD_COLOR)
@@ -184,12 +201,27 @@ LEVEL_TEMPLATE_IMAGES.append(LEVEL_7_TEMPLATE_IMAGE)
 LEVEL_TEMPLATE_IMAGES.append(LEVEL_8_TEMPLATE_IMAGE)
 LEVEL_TEMPLATE_IMAGES.append(LEVEL_9_TEMPLATE_IMAGE)
 
-
-
-STATS_INFO_MASK_IMAGES = []
-STATS_INFO_MASK_IMAGES.append(STATS_NAME_MASK_IMAGE)
-STATS_INFO_MASK_IMAGES.append(STATS_BOND_MASK_IMAGE)
-STATS_INFO_MASK_IMAGES.append(STATS_LEVEL_MASK_IMAGE)
+LEVEL_MASK_IMAGES = []
+LEVEL_0_MASK_IMAGE = cv2.imread("level 0 mask.png", cv2.IMREAD_GRAYSCALE)
+LEVEL_1_MASK_IMAGE = cv2.imread("level 1 mask.png", cv2.IMREAD_GRAYSCALE)
+LEVEL_2_MASK_IMAGE = cv2.imread("level 2 mask.png", cv2.IMREAD_GRAYSCALE)
+LEVEL_3_MASK_IMAGE = cv2.imread("level 3 mask.png", cv2.IMREAD_GRAYSCALE)
+LEVEL_4_MASK_IMAGE = cv2.imread("level 4 mask.png", cv2.IMREAD_GRAYSCALE)
+LEVEL_5_MASK_IMAGE = cv2.imread("level 5 mask.png", cv2.IMREAD_GRAYSCALE)
+LEVEL_6_MASK_IMAGE = cv2.imread("level 6 mask.png", cv2.IMREAD_GRAYSCALE)
+LEVEL_7_MASK_IMAGE = cv2.imread("level 7 mask.png", cv2.IMREAD_GRAYSCALE)
+LEVEL_8_MASK_IMAGE = cv2.imread("level 8 mask.png", cv2.IMREAD_GRAYSCALE)
+LEVEL_9_MASK_IMAGE = cv2.imread("level 9 mask.png", cv2.IMREAD_GRAYSCALE)
+LEVEL_MASK_IMAGES.append(LEVEL_0_MASK_IMAGE)
+LEVEL_MASK_IMAGES.append(LEVEL_1_MASK_IMAGE)
+LEVEL_MASK_IMAGES.append(LEVEL_2_MASK_IMAGE)
+LEVEL_MASK_IMAGES.append(LEVEL_3_MASK_IMAGE)
+LEVEL_MASK_IMAGES.append(LEVEL_4_MASK_IMAGE)
+LEVEL_MASK_IMAGES.append(LEVEL_5_MASK_IMAGE)
+LEVEL_MASK_IMAGES.append(LEVEL_6_MASK_IMAGE)
+LEVEL_MASK_IMAGES.append(LEVEL_7_MASK_IMAGE)
+LEVEL_MASK_IMAGES.append(LEVEL_8_MASK_IMAGE)
+LEVEL_MASK_IMAGES.append(LEVEL_9_MASK_IMAGE)
 
 
 STATS_STAR_MASK_IMAGE = cv2.imread("stats star mask.png", cv2.IMREAD_GRAYSCALE)
@@ -197,11 +229,12 @@ STAR_TEMPLATE_IMAGE = cv2.imread("star template.png", cv2.IMREAD_COLOR)
 STAR_MASK_IMAGE = cv2.imread("star mask.png", cv2.IMREAD_GRAYSCALE)
 
 
+# EQUIPMENT templates and masks
 EQUIPMENT_TEMPLATE_IMAGE = cv2.imread("equipment template.png", cv2.IMREAD_COLOR)
 EQUIPMENT_MASK_IMAGE = cv2.imread("equipment mask.png", cv2.IMREAD_GRAYSCALE)
 
 
-
+# SKILLS templates and masks
 SKILLS_TEMPLATE_IMAGE = cv2.imread("skills template.png", cv2.IMREAD_COLOR)
 SKILLS_1_STAR_MASK_IMAGE = cv2.imread("skills 1 star mask.png", cv2.IMREAD_GRAYSCALE)
 SKILLS_2_STAR_MASK_IMAGE = cv2.imread("skills 2 star mask.png", cv2.IMREAD_GRAYSCALE)
@@ -220,17 +253,22 @@ MAX_TEMPLATE_IMAGE = cv2.imread("max template.png", cv2.IMREAD_COLOR)
 MAX_MASK_IMAGE = cv2.imread("max mask.png", cv2.IMREAD_GRAYSCALE)
 
 
-
+# UE templates and masks
 UE_TEMPLATE_IMAGE = cv2.imread("ue template.png", cv2.IMREAD_COLOR)
 UE_MASK_IMAGE = cv2.imread("ue mask.png", cv2.IMREAD_GRAYSCALE)
+UE_E_MASK_IMAGE = cv2.imread("ue E mask.png", cv2.IMREAD_GRAYSCALE)
 UE_STAR_MASK_IMAGE = cv2.imread("ue star mask.png", cv2.IMREAD_GRAYSCALE)
 UE_LEVEL_MASK_IMAGE = cv2.imread("ue level mask.png", cv2.IMREAD_GRAYSCALE)
 
 STAR_UE_TEMPLATE_IMAGE = cv2.imread("star ue template.png", cv2.IMREAD_COLOR)
 STAR_UE_MASK_IMAGE = cv2.imread("star ue mask.png", cv2.IMREAD_GRAYSCALE)
 
+E_UE_TEMPLATE_IMAGE = cv2.imread("E ue template.png", cv2.IMREAD_COLOR)
+E_UE_MASK_IMAGE = cv2.imread("E ue mask.png", cv2.IMREAD_GRAYSCALE)
 
 
+
+# GEARS tempaltes and masks
 GEARS_TEMPLATE_IMAGE = cv2.imread("gears template.png", cv2.IMREAD_COLOR)
 GEARS_MASK_IMAGE = cv2.imread("gears mask.png", cv2.IMREAD_GRAYSCALE)
 
@@ -302,10 +340,16 @@ TIER_MASK_IMAGE = cv2.imread("tier mask.png", cv2.IMREAD_GRAYSCALE)
 #    contours
 #    flood fill
 
+
+# given an image, convert it to a string through pytesseract
 def convertImageToString(image):
+    # load in the tesseract
     pytesseract.tesseract_cmd = PATH_TO_TESSERACT
+    
+    # convert the iamge to a stirng
     imageToString = pytesseract.image_to_string(image)
-##    print("imageToString:", imageToString)
+    
+    # return the string
     return imageToString
 
 
@@ -321,25 +365,28 @@ def resizeImage(imageToResize, imageToMatch):
     # return the image
     return resizedImage
 
+
 # resize an image using a scale
 def scaleImage(imageToResize, scale):
     # get the dimensions of our matching image
     imageWidth = imageToResize.shape[1]
     imageHeight = imageToResize.shape[0]
-
+    
+    # scale our dimensions according to the given scale
     scaledWidth = int(imageWidth * scale)
     scaledHeight = int(imageHeight * scale)
     
-    # resize our target image to the other's dimensions
-    resizedImage = cv2.resize(imageToResize, (scaledWidth, scaledHeight))
+    # resize our target image to the new dimensions
+    scaledImage = cv2.resize(imageToResize, (scaledWidth, scaledHeight))
     
-    # return the image
-    return resizedImage
+    # return the scaled image
+    return scaledImage
 
 
 # given an image and a mask, crop the source within the area of the mask
-# intended to be used with masks that only have 1 area which is rectangular
+# intended to be used with masks that only have 1 rectangular area 
 def cropImageWithMask(sourceImage, maskImage):
+    # resize our mask to our source
     maskImage = resizeImage(maskImage, sourceImage)
     
     # get the area where the mask is white then split it into x and y coordinate arrays
@@ -352,30 +399,26 @@ def cropImageWithMask(sourceImage, maskImage):
     x2 = np.max(croppedAreaXCoordinates)
     y1 = np.min(croppedAreaYCoordiantes)
     y2 = np.max(croppedAreaYCoordiantes)
-
+    
     # return the cropped sourceimage
     return sourceImage[y1:y2, x1:x2]
 
 
 # create a mask based on the transparency of a given image
 def createMaskFromTransparency(image):
-    ## if the image doesnt have an alpha channel (only 3 channels) then no need for a mask
-
     # get shape of our image
     imageChannelCount = image.shape[2]
     imageWidth = image.shape[1]
     imageHeight = image.shape[0]
 
-    # if our image is only bgr (no alpha), then we don't need to make a mask
+    # if our image is only bgr (3 channels with no alpha), then we don't need to make a mask.
+    # because even using an all-white mask (essentailly same as no mask), causes the runtime to
+    # be about twice as long. so better to rock none
     if imageChannelCount == 3:
         return None
-        print("full whooite")
-        maskImage = np.ones((imageHeight, imageWidth), np.uint8) * 255
-        return maskImage
-    
     
     ## create an image with its values being the max. then we adjust the pixels according to the alpha channel
-    # start out with a blank image
+    # start out with an all-white image
     maskImage = np.ones((imageHeight, imageWidth), np.uint8) * 255
     
     # turn the img's transparency array into a scalar array.
@@ -383,172 +426,73 @@ def createMaskFromTransparency(image):
     imageAlphaChannel = image[:,:,3] 
     imageAlphaScalar = imageAlphaChannel / 255.0
     
-    # apply the scalar to our black image
+    # apply the scalar to our white image
     maskImage[:,:] = imageAlphaScalar[:,:] * maskImage[:,:]
     
-    # return the image
+    # return the created mask image
     return maskImage
 
 
 # given two images, and optional offsets, combine two images together,
 # blending in their transparencies and return it
 def overlapTransparentImages(bgImage, fgImage, xOffset = 0, yOffset = 0):
-    # get dimensions of our subarea, which is the fgImage
+    # get dimensions of our subarea, which is the foreground image (fgImage)
     fgImageWidth = fgImage.shape[1]
     fgImageHeight = fgImage.shape[0]
     
-    # determine the area we're working with. offset + dimensions
+    # determine the area we're working with. offset + fg dimensions
     x1 = xOffset
     x2 = x1 + fgImageWidth
     y1 = yOffset 
     y2 = y1 + fgImageHeight
-
-    # get the alpha channel of image2 and turn it into a scalar. turns 0-255 into 0-1
+    
+    # get the alpha channel of our fgimage and turn it into a scalar. turns 0-255 into 0-1
     fgImageAlphaChannel = fgImage[:,:,3]
     fgImageAlphaScalar = fgImageAlphaChannel / 255.0
     
-    # calculate what image1"s alpha should be. it is image2"s complement 
+    # calculate what the background image's (bgimage) alpha should be. it is fgimage's complement 
     bgImageAlphaScalar = 1.0 - fgImageAlphaScalar
-
-    # make a copy to work with and return
-    combinedImage = bgImage.copy()
-
-    # apply the scalar to each color channel
+    
+    # initialize our overlapped image. the base will be the bg image
+    overlappedImage = bgImage.copy()
+    
+    # apply the scalar to each color channel, bgr
     for colorChannel in range (0, 3):
-        # grab the color channel and apply the scalar to said channel
+        # grab the color channel and apply the scalar to said channel on the subarea in the bg image
         bgImageColorChannel = bgImage[y1:y2, x1:x2, colorChannel]  # color channel
         bgImageColor = bgImageAlphaScalar * bgImageColorChannel    # alpha applied to color channel
         
+        # then apply the scalar to all of the fg image
         fgImageColorChannel = fgImage[:, :, colorChannel]
         fgImageColor = fgImageAlphaScalar * fgImageColorChannel
-
-
-        # combine the colors from both images together
-        combinedImage[y1:y2, x1:x2, colorChannel] = bgImageColor + fgImageColor
-
-    return combinedImage
-
-
-# given an image, process it to remove noise and then return
-# the image with only the level showing
-def processBondImage(statsImage):
-    # convert the image to gray
-    grayStatsImage = cv2.cvtColor(statsImage, cv2.COLOR_BGR2GRAY)
-    
-    # image threshold, basically turns it black and white, highlighting important textures and features
-    processedStatsImage = cv2.threshold(grayStatsImage, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
-    
-    
-    statsImageContours = cv2.findContours(processedStatsImage, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-    statsImageContours = statsImageContours[0] if len(statsImageContours) == 2 else statsImageContours[1]
-    
-    contoursImage = np.ones((statsImage.shape[0], statsImage.shape[1]), np.uint8) * 255
-    # draw(imageToDrawOn, listOfContours, contourToDraw (negative is all), color, lineType)
-    cv2.drawContours(contoursImage, statsImageContours, -1, 0, cv2.FILLED)
-    
-    
-    statsBondNameImage = cropImageWithMask(contoursImage, STATS_BOND_NAME_MASK_IMAGE)
-
-    filledStatsBondNameImage = statsBondNameImage.copy()
-    # floodfill our image to black out the background
-    startPoint = (0, 0)         # start at the first pixel
-    newColor = (0, 0, 0, 255)   # color to flood with, black in this case
-    cv2.floodFill(filledStatsBondNameImage, None, startPoint, newColor)
-    
-    resizedBondMask = resizeImage(BOND_MASK_IMAGE, statsBondNameImage)
-    bondImage = cv2.bitwise_and(filledStatsBondNameImage, resizedBondMask)
-
-
-
-    resizedNameMask = resizeImage(NAME_MASK_IMAGE, statsBondNameImage)
-    invertedStatsBondNameImage = np.invert(statsBondNameImage)
-    nameImage = cv2.bitwise_and(invertedStatsBondNameImage, resizedNameMask)
-
-    
-
-    # morph open our image to remove general noise
-    kernelSizes = [1, 2, 3]
-    morphedBondNames = ["ero", "dil", "manop", "op", "mancl", "cl"]
-    morphedBonds = []
-    
-    for kernelIndex in range(len(kernelSizes)):
-        kernelSize = kernelSizes[kernelIndex]
         
-        kernel = np.ones((kernelSize, kernelSize), np.uint8)
-        
-        erosion = cv2.erode(bondImage, kernel)
-        dilation = cv2.dilate(bondImage, kernel)
-        manualOpen = cv2.dilate(erosion, kernel)
-        opening = cv2.morphologyEx(bondImage, cv2.MORPH_OPEN, kernel)
-        manualClose = cv2.erode(dilation, kernel)
-        closing = cv2.morphologyEx(bondImage, cv2.MORPH_CLOSE, kernel)
-        
-        morphedBonds.append(erosion)
-        morphedBonds.append(dilation)
-        morphedBonds.append(manualOpen)
-        morphedBonds.append(opening)
-        morphedBonds.append(manualClose)
-        morphedBonds.append(closing)
+        # combine the colors from both images together in the subarea
+        overlappedImage[y1:y2, x1:x2, colorChannel] = bgImageColor + fgImageColor
     
-    bond = 0
-    name = "yes"
-
-    for index in range(len(morphedBonds)):
-        morphedBond = morphedBonds[index]
-        bondNameImage = cv2.bitwise_or(morphedBond, nameImage)
-
-        bondNameString = convertImageToString(bondNameImage)
-        [bond, name] = bondNameString.split(" ", 1)
-        
-        cv2.imshow(str(time.time()), bondNameImage)
-
-        print("kernel:", str(index % 3 + 1), morphedBondNames[index % 6])
-        print("bond:", bond)
-        print("name:", name)
-    
-    return bond, name
+    # return the overlapped image
+    return overlappedImage
 
 
-def horizontalConcantenateImages(image1, image2):
-    image1Height = image1.shape[0]
-    image2Height = image2.shape[0]
-    
-    if image1Height > image2Height:
-        scale = image1H
-    imageScale = max()/min()
-    
-    
-    return concatenatedImage
-    
-
-
-
-def cropAndProcessNameImage(statsImage, imageScale, statsNameMaskImage, nameAdditionImage):
+# crop out the name subarea from the statsImage. then we process it by thresholding. then we concatenate
+# an image with "Name: " to the left of it to help pytesseract read better. then return the concatenated image
+def processNameImage(statsImage, imageScale):
     # crop the source according to our mask
-    nameImage = cropImageWithMask(statsImage, statsNameMaskImage)
-    
-    # resize our addition image to match nameImage's height
-    resizedNameAdditionImage = scaleImage(nameAdditionImage, imageScale)
-    resizedNameAdditionImage = cv2.resize(resizedNameAdditionImage, (resizedNameAdditionImage.shape[1], nameImage.shape[0]))
+    nameImage = cropImageWithMask(statsImage, STATS_NAME_MASK_IMAGE)
     
     # process our nameImage
     grayNameImage = cv2.cvtColor(nameImage, cv2.COLOR_BGR2GRAY)
     processedNameImage = cv2.threshold(grayNameImage, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
     
-    # combine the pictures
-    x1 = resizedNameAdditionImage.shape[1]
-    x2 = x1 + processedNameImage.shape[1]
+    # scale our addition image accordingly and then resize our its height to match nameImage's
+    resizedNameAdditionImage = scaleImage(NAME_ADDITION_IMAGE, imageScale)
+    resizedNameAdditionImage = cv2.resize(resizedNameAdditionImage, (resizedNameAdditionImage.shape[1], nameImage.shape[0]))
     
-    processedImage = np.zeros((resizedNameAdditionImage.shape[0], x2), np.uint8)
-    processedImage[:, :x1]   = resizedNameAdditionImage[:,:]
-    processedImage[:, x1:x2] = processedNameImage[:,:]
+    # then we concatenate them, putting the two images side by side
+    concatenatedImage = cv2.hconcat([resizedNameAdditionImage, processedNameImage])
     
-    #cv2.imshow("processedImage", processedImage)
-    
+    # and return the concatenated image
+    return concatenatedImage
 
-    return processedImage
-
-    
 
 # given an image, process it to remove noise and then return
 # the image with only the level showing
@@ -707,7 +651,7 @@ def processImage(colorImage, maskImage = None):
     print(convertImageToString(blankImage2))
     print(convertImageToString(blankImage3))
     print(convertImageToString(blankImage4))
-##    
+    
     return processedImage1, processedImage2, processedImage3, processedImage4
 
 
@@ -736,6 +680,7 @@ def mse(colorImage1, colorImage2, maskImage = None):
     imageArea = float(sourceImageHeight * sourceImageWidth)
     error = differenceSquared/imageArea
     
+    # return the error and the difference of the subimage
     return error, imageDifference
 
 
@@ -757,8 +702,8 @@ def returnErrAndDiff(template_img, subimage):
     return diff
 
 
-# from an array of results, return results that are above a certain threshold.
-# filter out results that have major overlap to avoid repeated hits
+# from an array of results, locations, and sizes, we filter the results that
+# overlap with our best matches, guaranteeing unique results
 def nms(matchResults, matchLocations, matchWidth, matchHeight, overlapThreshold):
     # unpack our arrays
     x1MatchCoordinates = matchLocations[:,0]
@@ -767,16 +712,11 @@ def nms(matchResults, matchLocations, matchWidth, matchHeight, overlapThreshold)
     y2MatchCoordinates = y1MatchCoordinates + matchHeight
     
     # determine which order to run through the results/coordinates.
-    # we do it based on the results, starting with the highest match.
-    # in TM method sqdiff, the lowest value is the highest match. while the other
-    # methods' highest value is the highest match.
-    # but since np.argsort sorts from low to high, we reverse it with [::-1] if needed.
-    # we create a dedicated array instead of just sorting the results array itself
-    # since we're working with other arrays (the coordinates array and results array)
-    if TEMPLATE_MATCH_METHOD == cv2.TM_SQDIFF or TEMPLATE_MATCH_METHOD == cv2.TM_SQDIFF_NORMED:
-        indexOrder = np.argsort(matchResults)[::1]
-    else:
-        indexOrder = np.argsort(matchResults)[::-1]
+    # we do it based on the results, starting with the best match.
+    # we create a dedicated "order" array instead of just sorting the results array itself.
+    # this is because we're working with other arrays (the coordinates and sizes array), so
+    # it's easier than having to work with all arrays simultaneously by sorting, removing elements, etc.
+    indexOrder = np.argsort(matchResults)[::1]
     
     # create an array to store our overlap percentages
     overlap = []
@@ -784,13 +724,15 @@ def nms(matchResults, matchLocations, matchWidth, matchHeight, overlapThreshold)
     # array to store the coordinates of our best matches, filtering out overlappers
     nmsResults = []
     nmsLocations = []
+    
+    # array to keep track of the nms-filtered index order we traversed
     nmsOrder = []
     
     
-    # go through all our boxes starting with highest match to lowest match.
-    # grab the coordinates of that box and store it into our filtered list.
-    # go through the rest of the coordinates to see if any of them have overlap.
-    # if any have overlap over the threshhold, we delete those values from our list
+    # go through all our boxes starting with best match.
+    # grab our best match and store it into out filtered list.
+    # then compare it to the rest of our boxes and record their overlap iwth our best match.
+    # if any have overlap over the threshhold, we delete those values from our index list, ignoring them as unique matches
     while len(indexOrder) > 0:
         # get the index to work with. should be our current highest match result
         # which should be the first item in the list.
@@ -802,12 +744,14 @@ def nms(matchResults, matchLocations, matchWidth, matchHeight, overlapThreshold)
         y1BestMatchCoordinate = y1MatchCoordinates[bestMatchIndex]
         y2BestMatchCoordinate = y2MatchCoordinates[bestMatchIndex]
         
+        nmsResults.append(matchResults[bestMatchIndex])
+        nmsLocations.append((x1BestMatchCoordinate, y1BestMatchCoordinate))
+        
+        # get its area
         bestMatchWidth = x2BestMatchCoordinate - x1BestMatchCoordinate
         bestMatchHeight = y2BestMatchCoordinate - y1BestMatchCoordinate
         bestMatchArea = bestMatchWidth * bestMatchHeight
         
-        nmsResults.append(matchResults[bestMatchIndex])
-        nmsLocations.append((x1BestMatchCoordinate, y1BestMatchCoordinate))
         
         ## determine the overlap of the other matches with the current match.
         ## to find the overlapping area, the x and y values should be furthest away
@@ -831,76 +775,147 @@ def nms(matchResults, matchLocations, matchWidth, matchHeight, overlapThreshold)
         
         # calculate the percentage of overlap with our matched area
         overlapPercentages = overlapAreas / bestMatchArea
-
-##        print("overlap", overlapPercentages)
         
         # delete the indices of matches where the overlap is over a certain threshold.
         # in this case, we delete the entries of the indicies so we don't
-        # iterate over them later. also delete the one we just worked on cause it's done
+        # iterate over them later.
         indexDelete = np.where(overlapPercentages > overlapThreshold)[0]
         indexOrder = np.setdiff1d(indexOrder, indexDelete, True)
         
+        # we add our current index to our orders array
         nmsOrder.append(bestMatchIndex)
     
+    
+    # reshape our array to represent (x,y) coordiantes
     nmsLocations = np.reshape(nmsLocations, (-1, 2))
     
+    # the amount of results is the amount of unique items
     nmsCount = len(nmsResults)
     
-    # return the coordinates of the filtered boxes
+##    print("nms: ", nmsResults)
+    
+
+    
+##    global MAX_HIT
+##    global MIN_MISS
+
+####    #### GET MAX AND MIN OVERLAP ####
+####    x1MatchCoordinates = nmsLocations[:,0]
+####    x2MatchCoordinates = x1MatchCoordinates + matchWidth
+####    y1MatchCoordinates = nmsLocations[:,1]
+####    y2MatchCoordinates = y1MatchCoordinates + matchHeight
+####    allOverlapPercentages = []
+####    
+####    for index in range(nmsCount):
+####        index = nmsOrder[index]
+####
+####        x1BestMatchCoordinate = x1MatchCoordinates[index]
+####        x2BestMatchCoordinate = x2MatchCoordinates[index]
+####        y1BestMatchCoordinate = y1MatchCoordinates[index]
+####        y2BestMatchCoordinate = y2MatchCoordinates[index]
+####        
+####        # get its area
+####        bestMatchWidth = x2BestMatchCoordinate - x1BestMatchCoordinate
+####        bestMatchHeight = y2BestMatchCoordinate - y1BestMatchCoordinate
+####        bestMatchArea = bestMatchWidth * bestMatchHeight
+####        
+####        x1OverlapCoordinates = np.maximum(x1BestMatchCoordinate, x1MatchCoordinates)
+####        x2OverlapCoordinates = np.minimum(x2BestMatchCoordinate, x2MatchCoordinates)
+####        y1OverlapCoordinates = np.maximum(y1BestMatchCoordinate, y1MatchCoordinates)
+####        y2OverlapCoordinates = np.minimum(y2BestMatchCoordinate, y2MatchCoordinates)
+####        
+####        ## calculate the area of overlap
+####        # we do a max of 0, because if you have a negative edges, that means there isn't 
+####        # any overlap and actually represents the area of empty space between the two matches.
+####        # and if you have 2 negative edges, the area will
+####        # still be positive, resulting in a false positive.
+####        overlapWidths  = np.maximum(0, x2OverlapCoordinates - x1OverlapCoordinates)
+####        overlapHeights = np.maximum(0, y2OverlapCoordinates - y1OverlapCoordinates)
+####        overlapAreas = overlapWidths * overlapHeights
+####
+####        overlapPercentages = overlapAreas / bestMatchArea
+####
+####        allOverlapPercentages.append(overlapPercentages)
+####        
+####        # here i wanna go through the matrix. change max_hit from the area within row AND col < star_cheat[counter]
+####        print(overlapPercentages)
+####    
+####    allOverlapPercentages = np.array(allOverlapPercentages)
+####    allOverlapPercentages = np.reshape(allOverlapPercentages, (nmsCount, nmsCount))
+####    
+####    starCount = STAR_CHEAT_SHEET[COUNTER]
+####    print("star:", starCount)
+####
+####    overlapHits = allOverlapPercentages[:starCount, :starCount]
+####    overlapHits = overlapHits.flatten()
+####
+####    overlapMisses = np.setdiff1d(allOverlapPercentages, overlapHits)
+####    print("hits:", overlapHits)
+####    print("miss:", overlapMisses)
+####    overlapHits = np.setdiff1d(overlapHits, [1.0])
+####    overlapMisses = np.setdiff1d(overlapMisses, [0.0])
+####    if len(overlapHits) > 0:
+####        if max(overlapHits) > MAX_HIT:
+####            MAX_HIT = max(overlapHits)
+####    if len(overlapMisses) > 0:
+####        if min(overlapMisses) < MIN_MISS:
+####            MIN_MISS = min(overlapMisses)
+
+
+##    starCount = STAR_CHEAT_SHEET[COUNTER]
+##
+##    if len(nmsResults) > 0:
+##        if max(nmsResults[:starCount]) > MAX_HIT:
+##            MAX_HIT = max(nmsResults[:starCount])
+##
+##        if starCount < nmsCount:
+##            if min(nmsResults[starCount:]) < MIN_MISS:
+##                MIN_MISS = min(nmsResults[starCount:])
+    
+    
+##    if max(nmsResults[:starCount]) > MAX_HIT:
+##        MAX_HIT = max(nmsResults[:starCount])
+##
+##    minValll = min(np.delete(matchResults, nmsOrder[:starCount]))
+##    if minValll < MIN_MISS:
+##        MIN_MISS = minValll
+        
+    
+    # return our values
     return nmsResults, nmsLocations, nmsCount, nmsOrder
 
 
+# filter our results and locations through a threshold, then further filter them through nms
 def filterResultsAndLocations(imageResults, imageWidth, imageHeight, matchThreshold, overlapThreshold):
+    # initially filter our results through our match threshold and grab the locations
     filteredResults = np.extract(imageResults <= matchThreshold, imageResults)
     (filteredYLocations, filteredXLocations) = np.where(imageResults <= matchThreshold)
-
+    
+    # np.where returns two arrays, first array of the row location and then the second array of the column locations.
+    # we want to format it instead as (col, row) values, aka (x, y) values
     filteredLocations = np.column_stack((filteredXLocations, filteredYLocations))
     
-    
-##    print("filteredResults", filteredResults)
-##    print("filteredLocations", filteredLocations)
-    
-    # filter out the results even more to remove matches that overlap with our best matches
+    # filter out the results even more to remove overlapping matches
     nmsResults, nmsLocations, nmsCount, nmsOrder = nms(filteredResults, filteredLocations, imageWidth, imageHeight, overlapThreshold)
-
-##    print("nmsResults", nmsResults)
-##    print("nmsLocations", nmsLocations)
     
+    # return our results
     return nmsResults, nmsLocations, nmsCount, nmsOrder
 
 
-#
-def runAllTemplateMatchingMethods(graySourceImage, grayTemplateImage, maskImage):
-    if method == cv2.TM_SQDIFF or method == cv2.TM_SQDIFF_NORMED:
-        bestMatchVal = float("inf")
-    else:
-        bestMatchVal = 0
+def drawBoxes(sourceImage, templateWidth, templateHeight, nmsLocations):
+    for index in range(len(nmsLocations)):
+        colorr = np.array([0, 0, 255]) * index / len(nmsLocations)
+        location = nmsLocations[index]
+        cv2.rectangle(sourceImage, (location), (location[0] + templateWidth, location[1] + templateHeight), colorr, 1)
 
-    bestMatchResult = []
-    
-    
-    for method in TEMPLATE_MATCH_METHODS_ARRAY:
-        matchResult = cv2.matchTemplate(graySourceImage, grayTemplateImage, method, mask = maskImage)
-        minVal, maxVal, minLoc, maxLoc = cv2.minMaxLoc(matchResult)
+    cv2.imshow(str(time.time()), scaleImage(sourceImage, 5.0))
 
-        if method == cv2.TM_SQDIFF or method == cv2.TM_SQDIFF_NORMED:
-            if minVal < bestMatchVal:
-                bestMatchVal = minVal
-                bestMatchResult = matchResult
-                bestMethod = method
-        else:
-            if maxVal > bestMatchVal:
-                bestMatchVal = maxVal
-                bestMatchResult = matchResult
-                bestMethod = method
-    
-    return bestMatchResult, str(bestMethod)
-    
+    return 0
 
 
-# template match given a scale. scale the template and template match
-# used for when you know what the scale of the template will be in your source
-def subimageScaledSearch(colorSourceImage, colorTemplateImage, maskImage = None, scale = 1.0):
+# template match given a scale. we scale the template and optional mask, then TM. keep the source as is.
+# used for when you know what the scale of the template will be in your source image.
+def subimageScaledSearch(colorSourceImage, imageScale, colorTemplateImage, maskImage = None):
     # make a grayscale copy of the main image
     graySourceImage = cv2.cvtColor(colorSourceImage, cv2.COLOR_BGR2GRAY)
     
@@ -908,9 +923,10 @@ def subimageScaledSearch(colorSourceImage, colorTemplateImage, maskImage = None,
     grayTemplateImage = cv2.cvtColor(colorTemplateImage, cv2.COLOR_BGR2GRAY)
     templateImageWidth = grayTemplateImage.shape[1]
     templateImageHeight = grayTemplateImage.shape[0]
-
-    scaledWidth = int(templateImageWidth * scale)
-    scaledHeight = int(templateImageHeight * scale)
+    
+    # scale our width and height according to our given image scale
+    scaledWidth = int(templateImageWidth * imageScale)
+    scaledHeight = int(templateImageHeight * imageScale)
     
     # resize our template and if needed, the mask 
     scaledGrayTemplateImage = cv2.resize(grayTemplateImage, (scaledWidth, scaledHeight))
@@ -921,34 +937,21 @@ def subimageScaledSearch(colorSourceImage, colorTemplateImage, maskImage = None,
     else:
         scaledMaskImage = cv2.resize(maskImage, (scaledWidth, scaledHeight))
         matchResult = cv2.matchTemplate(graySourceImage, scaledGrayTemplateImage, TEMPLATE_MATCH_METHOD, mask = scaledMaskImage)
-##        matchResult, method = runAllTemplateMatchingMethods(graySourceImage, scaledGrayTemplateImage, scaledMaskImage)
-
     
     # extract our values from the template match result
-    minVal, maxVal, minLoc, maxLoc = cv2.minMaxLoc(matchResult)
-
-    bestResult = 0
-
-    # our location differs by the method we're using
-    if TEMPLATE_MATCH_METHOD == cv2.TM_SQDIFF or TEMPLATE_MATCH_METHOD == cv2.TM_SQDIFF_NORMED:
-        bestResult = minVal
-        x1 = minLoc[0]
-        y1 = minLoc[1]
-    else:
-        bestResult = maxVal
-        x1 = maxLoc[0]
-        y1 = maxLoc[1]
+    minVal, _, minLoc, _ = cv2.minMaxLoc(matchResult)
     
     # compute the area of our subimage in our source image
+    x1 = minLoc[0]
     x2 = x1 + scaledWidth
+    y1 = minLoc[1]
     y2 = y1 + scaledHeight
     
     # get our subimage
     subimage = colorSourceImage[y1:y2, x1:x2]
-    #print("best method:", method)
 
     # return the subimage along with some other values
-    return subimage, scaledWidth, scaledHeight, bestResult, matchResult
+    return subimage, scaledWidth, scaledHeight, minVal, matchResult
 
 
 # resize our template image at different scales to try to find the best match in our source image
@@ -1108,37 +1111,21 @@ def subimageMultiScaleSearch (colorSourceImage, colorTemplateImage, maskImage = 
         else:
             scaledMaskImage = cv2.resize(maskImage, (scaledWidth, scaledHeight))
             matchResult = cv2.matchTemplate(graySourceImage, scaledGrayTemplateImage, TEMPLATE_MATCH_METHOD, mask = scaledMaskImage)
-##            matchResult, method = runAllTemplateMatchingMethods(graySourceImage, scaledGrayTemplateImage, scaledMaskImage)
         
-        minVal, maxVal, minLoc, maxLoc = cv2.minMaxLoc(matchResult)
+        minVal, _, minLoc, _ = cv2.minMaxLoc(matchResult)
 
         # check to see if our current match is better than our best match
-        if TEMPLATE_MATCH_METHOD == cv2.TM_SQDIFF or TEMPLATE_MATCH_METHOD == cv2.TM_SQDIFF_NORMED:
-            if minVal < bestMatch:
-                # if so, update our tracking variables and reset our bad counter
-                bestMatch = minVal
-                bestMatchLocation = minLoc
-                bestWidth = scaledWidth
-                bestHeight = scaledHeight
-                bestScale = scale
-                bestMatchResult = matchResult
-                badCounter = 0
-##                    bestMethod = method
-            else:
-                badCounter += 1
+        if minVal < bestMatch:
+            # if so, update our tracking variables and reset our bad counter
+            bestMatch = minVal
+            bestMatchLocation = minLoc
+            bestWidth = scaledWidth
+            bestHeight = scaledHeight
+            bestScale = scale
+            bestMatchResult = matchResult
+            badCounter = 0
         else:
-            if maxVal > bestMatch:
-                # if so, update our tracking variables and reset our bad counter
-                bestMatch = maxVal
-                bestMatchLocation = maxLoc
-                bestWidth = scaledWidth
-                bestHeight = scaledHeight
-                bestScale = scale
-                bestMatchResult = matchResult
-                badCounter = 0
-##                    bestMethod = method
-            else:
-                badCounter += 1
+            badCounter += 1
             
         
         scale = scale - SCALE_INCREMENT
@@ -1221,57 +1208,22 @@ def main(equipmentSubimage, scale, f):
     return 1
 
 
-
-def getStudentStats(sourceImage, imageScale):
-    # given our equipment image, TM for the stats with our scale 
-    statsSubimage, _, _, statsSubimageResult, _ = subimageScaledSearch(sourceImage, STATS_TEMPLATE_IMAGE, STATS_MASK_IMAGE, imageScale)
-    cv2.imshow("stats sub", statsSubimage)
+# get the name of the student given the stats image
+def getStudentName(statsImage, imageScale):
+    # process and crop our image to the name subarea. also adds an additional "name" before the image to help with reading it
+    processedNameSubimage = processNameImage(statsImage, imageScale)
     
-    # process our stats subimage
-##    processedStatsSubimage = processBondImage(statsSubimage)
-##    cv2.imshow("processedStatsSubimage", processedStatsSubimage)
+    # read the image
+    imageString = convertImageToString(processedNameSubimage)
     
-    studentName = getStudentName(statsSubimage, imageScale, STATS_NAME_MASK_IMAGE, NAME_ADDITION_IMAGE)
-    studentBond = getStatsLevels(statsSubimage, imageScale, STATS_BOND_MASK_IMAGE, BOND_TEMPLATE_IMAGES, BOND_MASK_IMAGES, BOND_MATCH_THRESHOLD, BOND_OVERLAP_THRESHOLD)
-    studentLevel = getStatsLevels(statsSubimage, imageScale, STATS_LEVEL_MASK_IMAGE, LEVEL_TEMPLATE_IMAGES, LEVEL_MASK_IMAGES, LEVEL_MATCH_THRESHOLD, LEVEL_OVERLAP_THRESHOLD)
-    studentStar = getStarCount(statsSubimage, imageScale, STATS_STAR_MASK_IMAGE, STAR_TEMPLATE_IMAGE, STAR_MASK_IMAGE, STAR_MATCH_THRESHOLD, STAR_OVERLAP_THRESHOLD)
+    # the image should read: "Name: StudentNameHere", so we take out the "Name: "
+    studentName = imageString.replace("Name: ", "")
     
-    global COUNTER
-    
-    print(studentName)
-    
-    if BOND_CHEAT_SHEET[COUNTER] != studentBond:
-        print("cheat bond:", BOND_CHEAT_SHEET[COUNTER])
-        print("stud bond:", studentBond)
-
-    if LEVEL_CHEAT_SHEET[COUNTER] != studentLevel:
-        print("cheat level:", LEVEL_CHEAT_SHEET[COUNTER])
-        print("student level:", studentLevel)
-
-    if STAR_CHEAT_SHEET[COUNTER] != studentStar:
-        print("cheat star:", STAR_CHEAT_SHEET[COUNTER])
-        print("student star:", studentStar)
-    
-    
-    COUNTER += 1
-    return 1
-
-
-
-HIGHEST_HIT = 0
-LOWEST_MISS = 1
-
-def getStudentName(statsImage, imageScale, statsNameMaskImage, nameAdditionImage):
-    processedNameSubimage = cropAndProcessNameImage(statsImage, imageScale, statsNameMaskImage, nameAdditionImage)
-    
-    studentName = convertImageToString(processedNameSubimage)
-    
+    # return the name
     return studentName
 
 
-
-
-
+# get the level from the stats image, can be used for both the Bond level and the Student level
 def getStatsLevels(statsImage, imageScale, statsLevelsMaskImage, levelTemplateImages, levelMaskImages, matchThreshold, overlapThreshold):
     # crop out your target area from the stats image given a mask
     statsLevelsImage = cropImageWithMask(statsImage, statsLevelsMaskImage)
@@ -1290,7 +1242,21 @@ def getStatsLevels(statsImage, imageScale, statsLevelsMaskImage, levelTemplateIm
         levelMaskImage = levelMaskImages[level]
         
         # TM for it in our levelsSubimage
-        levelSubimage, levelSubimageWidth, levelSubimageHeight, levelSubimageResult, levelSubimageResults = subimageScaledSearch(statsLevelsImage, levelTemplateImage, levelMaskImage, imageScale)
+        levelSubimage, levelSubimageWidth, levelSubimageHeight, levelSubimageResult, levelSubimageResults = subimageScaledSearch(statsLevelsImage, imageScale, levelTemplateImage, levelMaskImage)
+        
+        
+
+##        #### TESTING PURPOSES TO DETERMINE BEST THRESHOLD ####
+##        global MAX_HIT
+##        global MIN_MISS
+##        print(level, ":", levelSubimageResult)
+##        if level in BOND_CHEAT_SHEET_ARRAY[COUNTER]:
+##            if levelSubimageResult > MAX_HIT:
+##                MAX_HIT = levelSubimageResult
+##        else:
+##            if levelSubimageResult < MIN_MISS:
+##                MIN_MISS = levelSubimageResult
+                
         
         # if the best result is below our threshold, filter our results and record them
         if levelSubimageResult < matchThreshold:
@@ -1342,28 +1308,161 @@ def getStatsLevels(statsImage, imageScale, statsLevelsMaskImage, levelTemplateIm
     return statsLevels
 
 
-
+# get the number of stars. can be used for student star or ue star
 def getStarCount(sourceImage, imageScale, sourceStarMaskImage, starTemplateImage, starMaskImage, starMatchThreshold, starOverlapThreshold):
     # given the stats subimage, crop out the area where the stars should be using our mask
     sourceStarSubimage = cropImageWithMask(sourceImage, sourceStarMaskImage)
     
     # TM for star template in our starsSubimage
-    _, starSubimageWidth, starSubimageHeight, _, starSubimageResults = subimageScaledSearch(sourceStarSubimage, starTemplateImage, starMaskImage, imageScale)
+    _, starSubimageWidth, starSubimageHeight, starSubimageResult, starSubimageResults = subimageScaledSearch(sourceStarSubimage, imageScale, starTemplateImage, starMaskImage)
     
     # filter our results to be below the threshold and grab the coordinates of those matches
-    nmsStarResults, nmsStarLocations, nmsStarCount, _ = filterResultsAndLocations(starSubimageResults, starSubimageWidth, starSubimageHeight, starMatchThreshold, starOverlapThreshold)
+    nmsResults, nmsLocations, nmsStarCount, nmsOrder = filterResultsAndLocations(starSubimageResults, starSubimageWidth, starSubimageHeight, starMatchThreshold, starOverlapThreshold)
     
-##    for index in range(len(nmsStarLocations)):
-##        print(nmsStarLocations[index])
-##        print(nmsStarResults[index])
-##        color = (0, index/len(nmsStarLocations) * 255, 0)
-##        cv2.rectangle(sourceStarSubimage, nmsStarLocations[index], (nmsStarLocations[index][0] + starSubimageWidth, nmsStarLocations[index][1] + starSubimageHeight), color, 1)
-##
-##    cv2.imshow(str(time.time()), sourceStarSubimage)
-##    sourceStarSubimage = scaleImage(sourceStarSubimage, 5)
-##    cv2.imshow(str(time.time()), sourceStarSubimage)
+##    drawBoxes(sourceStarSubimage, starSubimageWidth, starSubimageHeight, nmsLocations)
     
+    # return our star count
     return nmsStarCount
+
+
+# get and return the info from our stats subimage. namely the student's name, bond, level, and star.
+def getStudentStats(sourceImage, imageScale):
+    # given our equipment image, TM for the stats with our scale 
+    statsSubimage, _, _, statsSubimageResult, _ = subimageScaledSearch(sourceImage, imageScale, STATS_TEMPLATE_IMAGE, STATS_MASK_IMAGE)
+    cv2.imshow("stats sub", statsSubimage)
+    
+##    studentName = getStudentName(statsSubimage, imageScale)
+##    studentBond = getStatsLevels(statsSubimage, imageScale, STATS_BOND_MASK_IMAGE, BOND_TEMPLATE_IMAGES, BOND_MASK_IMAGES, BOND_MATCH_THRESHOLD, BOND_OVERLAP_THRESHOLD)
+##    studentLevel = getStatsLevels(statsSubimage, imageScale, STATS_LEVEL_MASK_IMAGE, LEVEL_TEMPLATE_IMAGES, LEVEL_MASK_IMAGES, LEVEL_MATCH_THRESHOLD, LEVEL_OVERLAP_THRESHOLD)
+    studentStar = getStarCount(statsSubimage, imageScale, STATS_STAR_MASK_IMAGE, STAR_TEMPLATE_IMAGE, STAR_MASK_IMAGE, STAR_MATCH_THRESHOLD, STAR_OVERLAP_THRESHOLD)
+    
+    global COUNTER
+    
+##    if BOND_CHEAT_SHEET[COUNTER] != studentBond:
+##        print("cheat bond:", BOND_CHEAT_SHEET[COUNTER])
+##        print("stud bond:", studentBond)
+    
+##    if LEVEL_CHEAT_SHEET[COUNTER] != studentLevel:
+##        print("cheat level:", LEVEL_CHEAT_SHEET[COUNTER])
+##        print("student level:", studentLevel)
+    
+##    if STAR_CHEAT_SHEET[COUNTER] != studentStar:
+##        print("cheat star:", STAR_CHEAT_SHEET[COUNTER])
+##        print("student star:", studentStar)
+    
+    
+    
+    return 1, 1, 1, 1
+    return studentName, studentBond, studentLevel, studentStar
+
+
+# checks if the source has the equipped template in it. returns true or false
+def checkEquipped(sourceImage, imageScale, sourceEMaskImage, eTemplateImage, eMaskImage, eMatchThreshold):
+    # given the source image, get the area of where the "E" should be.
+    # the "E" represents whether there an item is equipped.
+    gearESubimage = cropImageWithMask(sourceImage, sourceEMaskImage)
+    
+    # template match for the "E"
+    eSubimage, _, _, eSubimageResult, _ = subimageScaledSearch(gearESubimage, imageScale, eTemplateImage, eMaskImage)
+    
+    # if the "E" match result is lower than our threshold, that means the "E" was found and there is a gear equipped
+    if eSubimageResult < eMatchThreshold:
+        return True
+    else:
+        return False
+
+
+# given the gear image, returns the level of the tier of the gear
+def getGearTier(gearImage, imageScale):
+    # given the specific gear image (gear1, gear2, or gear3), we get the subimage of where the tier should be
+    gearTierSubimage = cropImageWithMask(gearImage, GEAR_TIER_MASK_IMAGE)
+    
+    # variables to keep track of which tier template matches best with our image
+    bestTierResult = float("inf")
+    bestTier = 0
+    
+    # calculate the amount of available tiers
+    tierCount = len(TIER_TEMPLATE_IMAGES)
+    
+    # go through all the tier templates and see which one matches best 
+    for tier in range(tierCount):
+        # get the current tier template image
+        tierTemplateImage = TIER_TEMPLATE_IMAGES[tier]
+        
+        # template match the current tier template in our subimage
+        _, _, _, tierSubimageResult, _ = subimageScaledSearch(gearTierSubimage, imageScale, tierTemplateImage, TIER_MASK_IMAGE)
+        
+        # check to see if our current match is better than our best match
+        # update our variables if so
+        if tierSubimageResult < bestTierResult:
+            bestTierResult = tierSubimageResult
+            bestTier = tier + 1 # +1 because counter starts at 0
+    
+    # return our best-matched tier
+    return bestTier
+
+
+# given the equipment subimage, return an array of the student's gears tiers
+def getStudentGears(equipmentImage, imageScale, studentLevel):
+    # given our equipment image, TM for the gears area
+    gearsSubimage, _, _, gearsSubimageResult, _ = subimageScaledSearch(equipmentImage, imageScale, GEARS_TEMPLATE_IMAGE, GEARS_MASK_IMAGE)    
+    
+    # get the gear slot count
+    gearCount = len(GEAR_SLOT_LEVEL_REQUIREMENTS)
+
+    # array to keep track of our student's gear's tiers.
+    # we premake it because even if student doesnt meet the level req,
+    # that means the tier is 0, or in other words nothing is equipped
+    studentGears = np.zeros(gearCount, np.int)
+    
+    # go through all of our individual gears
+    for gear in range(gearCount):
+        # get the current gear's level req
+        gearSlotLevelRequirement = GEAR_SLOT_LEVEL_REQUIREMENTS[gear]
+        
+        # if student level isn't high enough, we break
+        if studentLevel < gearSlotLevelRequirement:
+            break
+        
+        # get the respective gear mask
+        gearMaskImage = GEAR_MASK_IMAGES[gear]
+        
+        # get the gear subimage
+        gearSubimage = cropImageWithMask(gearsSubimage, gearMaskImage)
+        
+        # check if the current gear slot has anything equipped
+        isGearEquipped = checkEquipped(gearSubimage, imageScale, GEAR_E_MASK_IMAGE, E_TEMPLATE_IMAGE, E_MASK_IMAGE, E_MATCH_THRESHOLD)
+        
+        # if a gear is equipped, we get the tier
+        # else we do nothing, leaving it at 0, representing no equip
+        if isGearEquipped:
+            # get the tier of the image and add it to our list
+            gearTier = getGearTier(gearSubimage, imageScale)
+            studentGears[gear] = gearTier
+    
+    # return our array of gears
+    return studentGears
+
+
+#
+def getStudentUE(equipmentImage, imageScale, studentStar):
+    ueSubimage, _, _, ueSubimageResult, _ = subimageScaledSearch(equipmentImage, imageScale, UE_TEMPLATE_IMAGE, UE_MASK_IMAGE)    
+    
+    # initialize our variables
+    ueStar = 0
+    ueLevel = 0
+    
+    # check to make sure the student's star is high enough to even own a UE
+    if studentStar >= UE_SLOT_STAR_REQUIREMENT:
+        isUEEquipped = checkEquipped(ueSubimage, imageScale, UE_E_MASK_IMAGE, E_UE_TEMPLATE_IMAGE, E_UE_MASK_IMAGE, E_UE_MATCH_THRESHOLD)
+
+        if isUEEquipped:
+            ueStar = getStarCount(ueSubimage, imageScale, UE_STAR_MASK_IMAGE, STAR_UE_TEMPLATE_IMAGE, STAR_UE_MASK_IMAGE, STAR_UE_MATCH_THRESHOLD, STAR_UE_OVERLAP_THRESHOLD)
+##            ueLevel = getUELevel()
+        
+    # return our ue's star and level
+    return ueStar, ueLevel
+
 
 
 directory = "student example"
@@ -1374,174 +1473,14 @@ for fileName in os.listdir(directory):
     sourceImage = cv2.imread(f, cv2.IMREAD_COLOR)
 
     scale = SCALE_CHEAT_SHEET[COUNTER]
-
+    studentStar = STAR_CHEAT_SHEET[COUNTER]
+    studentLevel = LEVEL_CHEAT_SHEET[COUNTER]
         
     print(f, scale)
     
-    getStudentStats(sourceImage, scale)
-
-
-######### getting UE stars #############
-##sourceImage = cv2.imread("akane ipad.png", cv2.IMREAD_COLOR)
-##equipmentTemplateImage = cv2.imread("skill template.png", cv2.IMREAD_COLOR)
-##equipmentMaskImage = cv2.imread("skill mask.png", cv2.IMREAD_GRAYSCALE)
-##
-##startTime = time.time()
-##equipmentSubimage, _, _, equipmentSubimageScale, _ = subimageMultiScaleSearch(sourceImage, equipmentTemplateImage, equipmentMaskImage)
-##cv2.imshow("equipmentSubimage", equipmentSubimage)
-##endTime = time.time()
-##print("Time: ", (endTime-startTime))
-##
-##ueTemplateImage = cv2.imread("ue template.png", cv2.IMREAD_COLOR)
-##ueMaskImage = cv2.imread("ue mask.png", cv2.IMREAD_GRAYSCALE)
-##ueSubimage, _, _, _ = subimageScaledSearch(equipmentSubimage, ueTemplateImage, ueMaskImage, equipmentSubimageScale)
-##cv2.imshow("ueSubimage", ueSubimage)
-##
-##ueStarsMaskImage = cv2.imread("ue stars mask.png", cv2.IMREAD_GRAYSCALE)
-##ueStarsSubimage = cropImageWithMask(ueSubimage, ueStarsMaskImage)
-##cv2.imshow("ueStarsSubimage", ueStarsSubimage)
-##
-##
-##
-##cv2.imwrite("akane ipad ue stars subimage.png", ueStarsSubimage)
-##ueStarsSubimage = cv2.imread("akane ipad ue stars subimage.png", cv2.IMREAD_COLOR)
-##
-##
-##
-##ueStarTemplate = cv2.imread("ue star template.png", cv2.IMREAD_COLOR)
-##ueStarMask = cv2.imread("ue star mask.png", cv2.IMREAD_GRAYSCALE)
-####ueStarMask = createMaskFromTransparency(ueStarTemplate)
-##ueStarSubimage, matchWidth, matchHeight, ueStarScale, ueStarResult = subimageMultiScaleSearch(ueStarsSubimage, ueStarTemplate, ueStarMask)#, equipmentSubimageScale)
-##
-##cv2.imshow("ueStarSubimage", ueStarSubimage)
-##ueStarSubimage = cv2.resize(ueStarSubimage, (ueStarSubimage.shape[1] *5,ueStarSubimage.shape[0] *5))
-##cv2.imshow("resueStarSubimage", ueStarSubimage)
-##
-##bestMatchLocations = np.where(ueStarResult <= UE_STAR_THRESHOLD)
-##filteredMatchesResults = np.extract(ueStarResult <= UE_STAR_THRESHOLD, ueStarResult)
-##
-### run our coordinates and results through NMS. now we should have coordinates of the 
-### best results with little-to-no overlapping areas
-##nmsLocations, nmsResults = nms(TEMPLATE_MATCH_METHOD, filteredMatchesResults, bestMatchLocations, matchWidth, matchHeight)
-##
-##
-##for index in range(len(nmsLocations)):
-####    print(nmsLocations[index])
-####    print(nmsResults[index])
-##    color = (0, index/len(nmsLocations) * 255, 0)
-##    cv2.rectangle(ueStarsSubimage, nmsLocations[index], (nmsLocations[index][0] + matchWidth, nmsLocations[index][1] + matchHeight), color, 1)
-##
-##cv2.imshow("ueStarsSubimage", ueStarsSubimage)
-##ueStarsSubimage = cv2.resize(ueStarsSubimage, (ueStarsSubimage.shape[1] *5,ueStarsSubimage.shape[0] *5))
-##cv2.imshow("resueStarsSubimage", ueStarsSubimage)
-##cv2.imwrite("akane ipad ue stars boxed subimage.png", ueStarsSubimage)
-##ueStarCount = len(nmsLocations)
-###print(ueStarCount)
-
-
-
-def getGearsTiers(equipmentImage, imageScale, studentLevel):
-    # given our equipment image, TM for the gears 
-    gearsSubimage, _, _, gearsSubimageResult, _ = subimageScaledSearch(equipmentImage, GEARS_TEMPLATE_IMAGE, GEARS_MASK_IMAGE, imageScale)
-##    cv2.imshow("gearsSubimage",gearsSubimage)
+##    studentName, studentBond, studentLevel, studentStar = getStudentStats(sourceImage, scale)
+    equipmentImage, _, _, _, _ = subimageScaledSearch(sourceImage, scale, EQUIPMENT_TEMPLATE_IMAGE, EQUIPMENT_MASK_IMAGE)
+    studentStar = STAR_CHEAT_SHEET[COUNTER]
+    studentUE = getStudentUE(equipmentImage, scale, studentStar)
     
-    
-    # get the gear slot count
-    gearCount = len(GEAR_SLOT_LEVEL_REQUIREMENTS)
-
-    # array to keep track of our student's gear's tiers
-    gearsTiers = np.zeros(gearCount, np.int)
-    
-    # go through all of our individual gears
-    for index in range(gearCount):
-        # get the current gear's level req
-        gearSlotLevelRequirement = GEAR_SLOT_LEVEL_REQUIREMENTS[index]
-        
-        # if student level isn't high enough, we break
-        if studentLevel < gearSlotLevelRequirement:
-            break
-        
-        # get the respective gear mask
-        gearMaskImage = GEAR_MASK_IMAGES[index]
-        
-        # get the gear subimage
-        gearSubimage = cropImageWithMask(gearsSubimage, gearMaskImage)
-##        cv2.imshow("gearSubimage",gearSubimage)
-        
-        # check if the current gear slot has anything equipped
-        isGearEquipped = checkGearEquipped(gearSubimage, imageScale)
-        
-        # if a gear is equipped, we get the tier
-        if isGearEquipped:
-            # get the tier of the image and add it to our list
-            gearTier = getGearTier(gearSubimage, imageScale)
-            gearsTiers[index] = gearTier
-    
-    
-    # return our tiers
-    return gearsTiers
-
-
-def checkGearEquipped(gearImage, imageScale):
-    # given the specific gear image (gear1, gear2, or gear3), we get the subimage of where the "E" should be
-    # the "E" represents whether there is a gear equipped in the slot
-    gearESubimage = cropImageWithMask(gearImage, GEAR_E_MASK_IMAGE)
-    
-    # template match for the "E"
-    eSubimage, _, _, eSubimageResult, _ = subimageScaledSearch(gearESubimage, E_TEMPLATE_IMAGE, E_MASK_IMAGE, imageScale)
-##    cv2.imshow(str(time.time()), eSubimage)
-##    print(eSubimageResult)
-##    return True
-    
-    # if the "E" match result is lower than our threshold, that means the "E" was found and there is a gear equipped
-    if eSubimageResult < E_MATCH_THRESHOLD:
-        return True
-    else:
-        return False
-
-
-def getGearTier(gearImage, imageScale):
-    # given the specific gear image (gear1, gear2, or gear3), we get the subimage of where the tier should be
-    gearTierSubimage = cropImageWithMask(gearImage, GEAR_TIER_MASK_IMAGE)
-    
-    # variables to keep track of which tier template matches best with our image
-    bestTierResult = float("inf")
-    bestTierSubimage = gearImage
-    bestTier = 0
-    
-    # counter/tracker for which tier we're currently using 
-    currentTier = 1
-    
-    # go through all the tier templates and see which one matches best 
-    for tierTemplateImage in TIER_TEMPLATE_IMAGES:
-        # template match the current tier template in our subimage
-        tierSubimage, _, _, tierSubimageResult, _ = subimageScaledSearch(gearTierSubimage, tierTemplateImage, TIER_MASK_IMAGE, imageScale)
-        
-        # check to see if our current match is better than our best match
-        # update our variables if so
-        if tierSubimageResult < bestTierResult:
-            bestTierResult = tierSubimageResult
-            bestTierSubimage = tierSubimage
-            bestTier = currentTier
-        
-        # increment our tier tracker
-        currentTier += 1
-    
-##    cv2.imshow(str(time.time()), bestTierSubimage)
-##    print(bestTierResult)
-    # return our best tier
-    return bestTier
-
-
-
-##directory = "student example ipad"
-##sourceImage = cv2.imread(r"student example ipad\airi ipad.png", cv2.IMREAD_COLOR)
-#_, _, _, scale, _ = subimageMultiScaleSearch(sourceImage, EQUIPMENT_TEMPLATE_IMAGE, EQUIPMENT_MASK_IMAGE)
-##scale = 1
-##
-##for fileName in os.listdir(directory):
-##    f = os.path.join(directory, fileName)
-##    sourceImage = cv2.imread(f, cv2.IMREAD_COLOR)
-##    subimage, _, _, _, _ = subimageScaledSearch(sourceImage, EQUIPMENT_TEMPLATE_IMAGE, EQUIPMENT_MASK_IMAGE, scale)
-##
-##    main(subimage, scale, f)
+    COUNTER += 1
