@@ -1,11 +1,11 @@
 import os
 
-directory = "stats level"
+directory = os.curdir
 scale = 1.0
 for fileName in os.listdir(directory):
     originalPath = os.path.join(directory, fileName)
-    replaceString = fileName.replace("level", "stats level")
-    
-    f = os.path.join(directory, replaceString)
-
-    os.rename(originalPath, f)
+    string = "skill level level"
+    if string in fileName:
+        replaceString = fileName.replace("skill level level", "skill level")
+        f = os.path.join(directory, replaceString)
+        os.rename(originalPath, f)
