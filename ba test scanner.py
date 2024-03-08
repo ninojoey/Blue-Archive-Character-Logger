@@ -28,6 +28,39 @@ print (SCALE_CHEAT_SHEET)
 # [:,:] all elements in all rows. comma is normal.
 
 
+# docstrings example
+#    """Add up two integer numbers.
+#
+#    This function simply wraps the ``+`` operator, and does not
+#    do anything interesting, except for illustrating what
+#    the docstring of a very simple function looks like.
+#
+#    Parameters
+#    ----------
+#    num1 : int
+#        First number to add.
+#    num2 : int
+#        Second number to add.
+#
+#    Returns
+#    -------
+#    int
+#        The sum of ``num1`` and ``num2``.
+#
+#    See Also
+#    --------
+#    subtract : Subtract one integer from another.
+#
+#    Examples
+#    --------
+#    >>> add(2, 2)
+#    4
+#    >>> add(25, 0)
+#    25
+#    >>> add(10, -10)
+#    0
+#    """
+
 # THINGS LEARNED AND USED
 # template matching
 #    multi scale matching
@@ -36,6 +69,7 @@ print (SCALE_CHEAT_SHEET)
 #    methods
 # non-maximum suppression
 # masks
+# api for database stuff
 # json
 #    loading
 #    reading
@@ -50,264 +84,38 @@ print (SCALE_CHEAT_SHEET)
 #    morphology
 #    contours
 #    flood fill
+# docstrings 
 
 
-# given an image, convert it to a string through pytesseract
-def convertImageToString(image):
-    # load in the tesseract
-    pytesseract.tesseract_cmd = PATH_TO_TESSERACT
-    
-    # convert the iamge to a stirng
-    imageToString = pytesseract.image_to_string(image)
-    
-    # return the string
-    return imageToString
+
+####### THINGS TO DO AND NOTES ########
+# program can currently read a folder of screenshots, and even that of different resolution and sizes
+#
+# bluestacks screen recoridng records at 1280x720, so if using that please make your client the same resolution
+#   the reason is because if you're doing a different aspect ratio, the recording will have squeezed/stretched items
+# website
+#
 
 
-# resize an image based on a second image's dimensions
-def resizeImage(imageToResize, imageToMatch):
-    # get the dimensions of our matching image
-    imageWidth = imageToMatch.shape[1]
-    imageHeight = imageToMatch.shape[0]
-    
-    # resize our target image to the other's dimensions
-    resizedImage = cv2.resize(imageToResize, (imageWidth, imageHeight))
-    
-    # return the image
-    return resizedImage
-
-
-# resize an image using a scale
-def scaleImage(imageToResize, scale):
-    # get the dimensions of our matching image
-    imageWidth = imageToResize.shape[1]
-    imageHeight = imageToResize.shape[0]
-    
-    # scale our dimensions according to the given scale
-    scaledWidth = int(imageWidth * scale)
-    scaledHeight = int(imageHeight * scale)
-    
-    # resize our target image to the new dimensions
-    scaledImage = cv2.resize(imageToResize, (scaledWidth, scaledHeight))
-    
-    # return the scaled image
-    return scaledImage
-
-
-# given an image and a mask, crop the source within the area of the mask
-# intended to be used with masks that only have 1 rectangular area 
-def cropImageWithMask(sourceImage, maskImage):
-    # resize our mask to our source
-    maskImage = resizeImage(maskImage, sourceImage)
-    
-    # get the area where the mask is white then split it into x and y coordinate arrays
-    croppedAreaLocations = np.where(maskImage == 255)
-    croppedAreaXCoordinates = croppedAreaLocations[1]
-    croppedAreaYCoordiantes = croppedAreaLocations[0]
-    
-    # the min and max values will be the corners of the croppedArea
-    x1 = np.min(croppedAreaXCoordinates)
-    x2 = np.max(croppedAreaXCoordinates)
-    y1 = np.min(croppedAreaYCoordiantes)
-    y2 = np.max(croppedAreaYCoordiantes)
-    
-    # return the cropped sourceimage
-    return sourceImage[y1:y2, x1:x2]
-
-
-# create a mask based on the transparency of a given image
-def createMaskFromTransparency(image):
-    # get shape of our image
-    imageChannelCount = image.shape[2]
-    imageWidth = image.shape[1]
-    imageHeight = image.shape[0]
-
-    # if our image is only bgr (3 channels with no alpha), then we don't need to make a mask.
-    # because even using an all-white mask (essentailly same as no mask), causes the runtime to
-    # be about twice as long. so better to rock none
-    if imageChannelCount == 3:
-        return None
-    
-    ## create an image with its values being the max. then we adjust the pixels according to the alpha channel
-    # start out with an all-white image
-    maskImage = np.ones((imageHeight, imageWidth), np.uint8) * 255
-    
-    # turn the img's transparency array into a scalar array.
-    # an image's transparency is on index 3, and the max value is 255 (for completely visible)
-    imageAlphaChannel = image[:,:,3] 
-    imageAlphaScalar = imageAlphaChannel / 255.0
-    
-    # apply the scalar to our white image
-    maskImage[:,:] = imageAlphaScalar[:,:] * maskImage[:,:]
-    
-    # return the created mask image
-    return maskImage
-
-
-# given two images, and optional offsets, combine two images together,
-# blending in their transparencies and return it
-def overlapTransparentImages(bgImage, fgImage, xOffset = 0, yOffset = 0):
-    # get dimensions of our subarea, which is the foreground image (fgImage)
-    fgImageWidth = fgImage.shape[1]
-    fgImageHeight = fgImage.shape[0]
-    
-    # determine the area we're working with. offset + fg dimensions
-    x1 = xOffset
-    x2 = x1 + fgImageWidth
-    y1 = yOffset 
-    y2 = y1 + fgImageHeight
-    
-    # get the alpha channel of our fgimage and turn it into a scalar. turns 0-255 into 0-1
-    fgImageAlphaChannel = fgImage[:,:,3]
-    fgImageAlphaScalar = fgImageAlphaChannel / 255.0
-    
-    # calculate what the background image's (bgimage) alpha should be. it is fgimage's complement 
-    bgImageAlphaScalar = 1.0 - fgImageAlphaScalar
-    
-    # initialize our overlapped image. the base will be the bg image
-    overlappedImage = bgImage.copy()
-    
-    # apply the scalar to each color channel, bgr
-    for colorChannel in range (0, 3):
-        # grab the color channel and apply the scalar to said channel on the subarea in the bg image
-        bgImageColorChannel = bgImage[y1:y2, x1:x2, colorChannel]  # color channel
-        bgImageColor = bgImageAlphaScalar * bgImageColorChannel    # alpha applied to color channel
-        
-        # then apply the scalar to all of the fg image
-        fgImageColorChannel = fgImage[:, :, colorChannel]
-        fgImageColor = fgImageAlphaScalar * fgImageColorChannel
-        
-        # combine the colors from both images together in the subarea
-        overlappedImage[y1:y2, x1:x2, colorChannel] = bgImageColor + fgImageColor
-    
-    # return the overlapped image
-    return overlappedImage
-
-
-# crop out the name subarea from the statsImage. then we process it by thresholding. then we concatenate
-# an image with "Name: " to the left of it to help pytesseract read better. then return the concatenated image
-def processNameImage(statsImage, imageScale):
-    # crop the source according to our mask
-    nameImage = cropImageWithMask(statsImage, STATS_NAME_MASK_IMAGE)
-    
-    # process our nameImage
-    grayNameImage = cv2.cvtColor(nameImage, cv2.COLOR_BGR2GRAY)
-    processedNameImage = cv2.threshold(grayNameImage, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
-    
-    # scale our addition image accordingly and then resize our its height to match nameImage's
-    resizedNameAdditionImage = scaleImage(NAME_ADDITION_IMAGE, imageScale)
-    resizedNameAdditionImage = cv2.resize(resizedNameAdditionImage, (resizedNameAdditionImage.shape[1], nameImage.shape[0]))
-    
-    # then we concatenate them, putting the two images side by side
-    concatenatedImage = cv2.hconcat([resizedNameAdditionImage, processedNameImage])
-    
-    # and return the concatenated image
-    return concatenatedImage
-
-
-# given an image, process it to remove noise and then return
-# the image with only the level showing
-def processImage(colorImage, maskImage = None):
-    # convert the image to gray
-    grayImage = cv2.cvtColor(colorImage, cv2.COLOR_BGR2GRAY)
-##    cv2.imshow("grayImage", grayImage)
-
-    
-    # image threshold, basically turns it black and white,
-    # highlighting important textures and features
-    processedImage = cv2.threshold(grayImage, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
-##    cv2.imshow("thresh", processedImage)
-    
-    countourMethods = [cv2.RETR_LIST, cv2.RETR_EXTERNAL, cv2.RETR_TREE, cv2.RETR_CCOMP]
-    contours = cv2.findContours(processedImage, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-    contours = contours[0] if len(contours) == 2 else contours[1]
-    cv2.drawContours(processedImage, contours, -1, 0, 1)
-    
-    blankImage1 = np.ones((processedImage.shape[0], processedImage.shape[1]), np.uint8) * 255
-    cv2.drawContours(blankImage1, contours, -1, 0, cv2.FILLED)
-##    cv2.imshow("RETR_LIST", processedImage)
-    cv2.imshow("b RETR_LIST", blankImage1)
-    
-
-##    # morph open our image to remove general noise
-##    kernel = np.ones((1, 1),np.uint8)
-##    
-##    erosion = cv2.erode(processedImage, kernel, iterations = 1)
-##    cv2.imshow("erode", erosion)
-##    
-##    dilation = cv2.dilate(processedImage, kernel,iterations = 1)
-##    cv2.imshow("dilation", dilation)
-##
-##    # or cv2.MORPH_OPEN
-##    opening = cv2.morphologyEx(processedImage, cv2.MORPH_OPEN, kernel)
-##    cv2.imshow("opening", opening)
-    
-    # floodfill our image to black out the background
-    startPoint = (10, 10)         # start at the first pixel
-    newColor = (0, 0, 0, 255)   # color to flood with, black in this case
-    cv2.floodFill(processedImage, None, startPoint, newColor)
-    
-    
-    # apply mask if there is one 
-    if maskImage is not None:
-        maskImage = resizeImage(maskImage, processedImage)
-        processedImage = cv2.bitwise_and(processedImage, maskImage)
-
-    processedImage = cv2.cvtColor(processedImage, cv2.COLOR_GRAY2BGR)
-    
-    return processedImage
-
-
-# calculate and return the mean squared error between two given images, with an optional mask
-def mse(colorImage1, colorImage2, maskImage = None):
-    if maskImage is None:
-        maskImage = createMaskFromTransparency(colorImage2)
-
-    grayImage1 = cv2.cvtColor(colorImage1, cv2.COLOR_BGR2GRAY)
-    grayImage2 = cv2.cvtColor(colorImage2, cv2.COLOR_BGR2GRAY)
-    
-    # store our image"s width and height. they should be the same
-    imageWidth = grayImage1.shape[1]
-    imageHeight = grayImage1.shape[0]
-
-    maskedImage1 = cv2.bitwise_and(grayImage1, grayImage1, mask = maskImage)
-
-    # subtract our image. will return a 2d array of 0"s and 1"s
-    # 0 should represent if the pixels are the same. 1 if not
-    imageDifference = cv2.subtract(maskedImage1, grayImage2)
-
-    # sum up all the diff squared
-    differenceSquared = np.sum(imageDifference ** 2)
-
-    # calculate the mse
-    imageArea = float(sourceImageHeight * sourceImageWidth)
-    error = differenceSquared/imageArea
-    
-    # return the error and the difference of the subimage
-    return error, imageDifference
-
-
-def returnErrAndDiff(template_img, subimage):
-    # make sure both images are the same dimensions
-    template_resized = cv2.resize(template_img, (subimage.shape[1], subimage.shape[0]))
-    template_scaledGrayTemplateImage = cv2.cvtColor(template_resized, cv2.COLOR_BGR2GRAY)
-
-    subimage_gray = cv2.cvtColor(subimage, cv2.COLOR_BGR2GRAY)
-    
-    error, diff = mse(template_scaledGrayTemplateImage, subimage_gray)
-    print("Image matching Error between the two images:", error)
-
-    path_to_tesseract = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-    pytesseract.tesseract_cmd = path_to_tesseract
-    text = pytesseract.image_to_string(diff)
-    print (text[:-1])
-    
-    return diff
 
 
 # from an array of results, locations, and sizes, we filter the results that
 # overlap with our best matches, guaranteeing unique results
 def nms(matchResults, matchLocations, matchWidth, matchHeight, overlapThreshold):
+    """From arrays of results and respective info, find the best, unique results.
+
+    We take our best matches and then compare the area they cover with the other results. If any overlap passes
+    our threshold, we remove them. Then we move onto the next best result and keep going til we get to the end
+    of our array or there are no more results.
+    Our threshold was determined through a bunch of testing.
+
+    Returns
+    nmsResults:   array of the best, final, filtered results
+    nmsLocations: locations of those results. each value should be a pair that represents
+                  the location on the image 
+    nmsCount:     amount of filtered results
+    nmsOrder:     i believe this variable was used for overlap testing, don't see any current use in the program
+    """
     if type(matchWidth) == int:
         matchWidth = np.full_like(matchResults, matchWidth)
 
@@ -499,6 +307,19 @@ def nms(matchResults, matchLocations, matchWidth, matchHeight, overlapThreshold)
 
 # filter our results and locations through a threshold, then further filter them through nms
 def filterResultsAndLocations(imageResults, imageWidth, imageHeight, matchThreshold, overlapThreshold):
+    """Filter our results and run them through nms to find the best, unique matches, then return them
+
+    First do an easy filter where we remove the values that don't pass an initial threshold.
+    Second, create an array of (x,y) values representing the filtered results' locations in the image.
+    Finally we run these results through nms, which should give us the best, unique matches
+
+    Returns
+    nmsResults:   array of the best, final, filtered results
+    nmsLocations: locations of those results. each value should be a pair that represents
+                  the location on the image 
+    nmsCount:     amount of filtered results
+    nmsOrder:     i believe this variable was used for overlap testing, don't see any current use in the program
+    """
     # initially filter our results through our match threshold and grab the locations
     filteredResults = np.extract(imageResults <= matchThreshold, imageResults)
     (filteredYLocations, filteredXLocations) = np.where(imageResults <= matchThreshold)
@@ -531,6 +352,18 @@ def drawBoxes(sourceImage, nmsLocations, templateWidth, templateHeight):
 # template match given a scale. we scale the template and optional mask, then TM. keep the source as is.
 # used for when you know what the scale of the template will be in your source image.
 def subimageScaledSearch(colorSourceImage, imageScale, colorTemplateImage, maskImage = None):
+    """Scaling a template image with an optional mask, search through the source image to find the best
+    match to the template.
+
+    With our given scale, scale the template image and search through the image to find the best match.
+
+    Returns
+    subimage:     subimage of our matched template
+    scaledWidth:  width of our subimage
+    scaledHeight: height of our subimage
+    minVal:       value from the calculation of the best result
+    matchResults:  array of all the values of our template match search
+    """
     # make a grayscale copy of the main image
     graySourceImage = cv2.cvtColor(colorSourceImage, cv2.COLOR_BGR2GRAY)
     
@@ -548,13 +381,13 @@ def subimageScaledSearch(colorSourceImage, imageScale, colorTemplateImage, maskI
     
     # get the results of our template match and extract the location of the best match from our results
     if maskImage is None:
-        matchResult = cv2.matchTemplate(graySourceImage, scaledGrayTemplateImage, TEMPLATE_MATCH_METHOD)
+        matchResults = cv2.matchTemplate(graySourceImage, scaledGrayTemplateImage, TEMPLATE_MATCH_METHOD)
     else:
         scaledMaskImage = cv2.resize(maskImage, (scaledWidth, scaledHeight))
-        matchResult = cv2.matchTemplate(graySourceImage, scaledGrayTemplateImage, TEMPLATE_MATCH_METHOD, mask = scaledMaskImage)
+        matchResults = cv2.matchTemplate(graySourceImage, scaledGrayTemplateImage, TEMPLATE_MATCH_METHOD, mask = scaledMaskImage)
     
     # extract our values from the template match result
-    minVal, _, minLoc, _ = cv2.minMaxLoc(matchResult)
+    minVal, _, minLoc, _ = cv2.minMaxLoc(matchResults)
     
     # compute the area of our subimage in our source image
     x1 = minLoc[0]
@@ -566,12 +399,25 @@ def subimageScaledSearch(colorSourceImage, imageScale, colorTemplateImage, maskI
     subimage = colorSourceImage[y1:y2, x1:x2]
 
     # return the subimage along with some other values
-    return subimage, scaledWidth, scaledHeight, minVal, matchResult
+    return subimage, scaledWidth, scaledHeight, minVal, matchResults
 
 
 # resize our template image at different scales to try to find the best match in our source image
 # return the results of said match, and the location of best match
 def subimageMultiScaleSearch (colorSourceImage, colorTemplateImage, maskImage = None):
+    """With a template image and optional mask, find the best scale of our template match in the source image
+    by continuously matching while the scale.
+
+    Template match at one scale. Record the result. Now do again with incrementing and decrementing scales
+    until you have gone through all possibilities. Record and return our best match
+
+    Returns
+    subimage:         subimage of our best matched template
+    bestWidth:        width of our subimage
+    bestHeight:       height of our subimage
+    bestScale:        scale that we found to result in the closest template match
+    bestMatchResults: array of all the values of our template match search when using our best scale
+    """
     # make a grayscale copy of the main image, and store its width and height
     graySourceImage = cv2.cvtColor(colorSourceImage, cv2.COLOR_BGR2GRAY)
     sourceImageWidth = graySourceImage.shape[1]
@@ -588,7 +434,7 @@ def subimageMultiScaleSearch (colorSourceImage, colorTemplateImage, maskImage = 
     bestWidth = templateImageWidth
     bestHeight = templateImageHeight
     bestScale = 1.0
-    bestMatchResult = []
+    bestMatchResults = []
     bestMethod = ""
     bestMatch = float("inf")
     
@@ -616,14 +462,14 @@ def subimageMultiScaleSearch (colorSourceImage, colorTemplateImage, maskImage = 
         # matchTemplate returns a 2d array of decimals. the decimal represents the match value
         # of the tempalte at that respective location on the image.
         if maskImage is None:
-            matchResult = cv2.matchTemplate(graySourceImage, scaledGrayTemplateImage, TEMPLATE_MATCH_METHOD)
+            matchResults = cv2.matchTemplate(graySourceImage, scaledGrayTemplateImage, TEMPLATE_MATCH_METHOD)
         else:
             scaledMaskImage = cv2.resize(maskImage, (scaledWidth, scaledHeight))
-            matchResult = cv2.matchTemplate(graySourceImage, scaledGrayTemplateImage, TEMPLATE_MATCH_METHOD, mask = scaledMaskImage)
+            matchResults = cv2.matchTemplate(graySourceImage, scaledGrayTemplateImage, TEMPLATE_MATCH_METHOD, mask = scaledMaskImage)
 ##            matchResult, method = runAllTemplateMatchingMethods(graySourceImage, scaledGrayTemplateImage, scaledMaskImage)
 
         # store our values into corresponding variables
-        minVal, maxVal, minLoc, maxLoc = cv2.minMaxLoc(matchResult)
+        minVal, maxVal, minLoc, maxLoc = cv2.minMaxLoc(matchResults)
 
         # check to see if our current match is better than our best match
         if minVal < bestMatch:
@@ -633,7 +479,7 @@ def subimageMultiScaleSearch (colorSourceImage, colorTemplateImage, maskImage = 
             bestWidth = scaledWidth
             bestHeight = scaledHeight
             bestScale = scale
-            bestMatchResult = matchResult
+            bestMatchResults = matchResults
             badCounter = 0
 ##                bestMethod = method
         else:
@@ -687,12 +533,12 @@ def subimageMultiScaleSearch (colorSourceImage, colorTemplateImage, maskImage = 
         scaledGrayTemplateImage = cv2.resize(grayTemplateImage, (scaledWidth, scaledHeight))
         
         if maskImage is None:
-            matchResult = cv2.matchTemplate(graySourceImage, scaledGrayTemplateImage, TEMPLATE_MATCH_METHOD)
+            matchResults = cv2.matchTemplate(graySourceImage, scaledGrayTemplateImage, TEMPLATE_MATCH_METHOD)
         else:
             scaledMaskImage = cv2.resize(maskImage, (scaledWidth, scaledHeight))
-            matchResult = cv2.matchTemplate(graySourceImage, scaledGrayTemplateImage, TEMPLATE_MATCH_METHOD, mask = scaledMaskImage)
+            matchResults = cv2.matchTemplate(graySourceImage, scaledGrayTemplateImage, TEMPLATE_MATCH_METHOD, mask = scaledMaskImage)
         
-        minVal, _, minLoc, _ = cv2.minMaxLoc(matchResult)
+        minVal, _, minLoc, _ = cv2.minMaxLoc(matchResults)
 
         # check to see if our current match is better than our best match
         if minVal < bestMatch:
@@ -702,7 +548,7 @@ def subimageMultiScaleSearch (colorSourceImage, colorTemplateImage, maskImage = 
             bestWidth = scaledWidth
             bestHeight = scaledHeight
             bestScale = scale
-            bestMatchResult = matchResult
+            bestMatchResults = matchResults
             badCounter = 0
         else:
             badCounter += 1
@@ -720,11 +566,12 @@ def subimageMultiScaleSearch (colorSourceImage, colorTemplateImage, maskImage = 
     y2 = y1 + bestHeight
     subimage = colorSourceImage[y1:y2, x1:x2]
     
-    return subimage, bestWidth, bestHeight, bestScale, bestMatchResult
+    return subimage, bestWidth, bestHeight, bestScale, bestMatchResults
 
 
 # get the name of the student given the stats image
 def getStudentName(statsImage, imageScale):
+    """Given the stats subimage and the scale, process and return the student's name."""
     # process and crop our image to the name subarea. also adds an additional "name" before the image to help with reading it
     processedNameSubimage = processNameImage(statsImage, imageScale)
     
@@ -777,17 +624,17 @@ def getLevels(sourceImage, imageScale, sourceLevelsMaskImage, levelTemplateImage
         # if the best result is below our threshold, filter our results and record them
         if levelSubimageResult < matchThreshold:
             # filter our results through NMS
-            nmsResults, nmsLocations, levelCount, _ = filterResultsAndLocations(levelSubimageResults, levelSubimageWidth, levelSubimageHeight, matchThreshold, overlapThreshold)
+            nmsResults, nmsLocations, nmsCount, _ = filterResultsAndLocations(levelSubimageResults, levelSubimageWidth, levelSubimageHeight, matchThreshold, overlapThreshold)
             
             ## record our results
             # the reason why we extend widths, heights, and matches multiple times is because
             # results and locations may have multiple values. so we extend these ones by the
             # resultCount(levelCount) for when we start to furtther filter values from our arrays.
-            levelsWidths.extend([levelSubimageWidth] * levelCount)
-            levelsHeights.extend([levelSubimageHeight] * levelCount)
+            levelsWidths.extend([levelSubimageWidth] * nmsCount)
+            levelsHeights.extend([levelSubimageHeight] * nmsCount)
             levelsNMSResults.extend(nmsResults)
             levelsNMSLocations.extend(nmsLocations)
-            levelsNMSMatches.extend([level] * levelCount)
+            levelsNMSMatches.extend([level] * nmsCount)
     
     # convert our lists to np arrays for coding purposes
     levelsWidths = np.array(levelsWidths)
@@ -799,7 +646,7 @@ def getLevels(sourceImage, imageScale, sourceLevelsMaskImage, levelTemplateImage
     # further filter our results. do so because sometimes numbers like "1" will TM to "4"s, and "5"s and "6"s, or "3"s and "8"s.
     # so with our array of all our matches thrown together, we filter it to make sure that we only have the best matches + no overlap.
     # a 3 should have a better match to 3 than 8 would to 3, so the 3 has priority. then we filter matches that have significatn overlap with the 3 (the 8)
-    nms2Results, nms2Locations, levelCount, nms2Order = nms(levelsNMSResults, levelsNMSLocations, levelsWidths, levelsHeights, overlapThreshold)
+    nms2Results, nms2Locations, nmsCount, nms2Order = nms(levelsNMSResults, levelsNMSLocations, levelsWidths, levelsHeights, overlapThreshold)
     
     # extract only our x coordinates from our locations array
     nms2XCoordinates = nms2Locations[:, 0]
@@ -826,6 +673,7 @@ def getLevels(sourceImage, imageScale, sourceLevelsMaskImage, levelTemplateImage
     
     
     return statsLevels
+
 
 
 # get the number of stars. can be used for student star or ue star
@@ -869,19 +717,19 @@ def getStudentSkills(equipmentImage, imageScale, studentStar):
     skillsSubimage, _, _, skillsSubimageResult, _ = subimageScaledSearch(equipmentImage, imageScale, SKILLS_TEMPLATE_IMAGE, skillsMaskImage)
     
     # get our skill count, depends on the slot count.
-    skillCount = len(SKILL_SLOT_MASK_IMAGES)
+    skillsCount = len(SKILLS_SLOT_MASK_IMAGES)
     
     # initialize our return array. 0 represents the skill not being unlocked
     studentSkills = np.zeros(skillCount, int)
     
     # go through all of our skill slots
-    for skill in range(skillCount):
+    for skill in range(skillsCount):
         # get the mask for the respective slot
-        skillSlotMaskImage = SKILL_SLOT_MASK_IMAGES[skill]
+        skillsSlotMaskImage = SKILLS_SLOT_MASK_IMAGES[skill]
         
         # get the subimage of the skill slot
-        skillSlotSubimage = cropImageWithMask(skillsSubimage, skillSlotMaskImage)
-        cv2.imshow("skillSlotSubimage", skillSlotSubimage)
+        skillsSlotSubimage = cropImageWithMask(skillsSubimage, skillsSlotMaskImage)
+        cv2.imshow("skillsSlotSubimage", skillsSlotSubimage)
         # variables to keep track of our best skill level match
         bestSkillLevelResult = float("inf")
         bestSkillLevel = -1
@@ -899,7 +747,7 @@ def getStudentSkills(equipmentImage, imageScale, studentStar):
             cv2.imshow("skillLevelMask", skillLevelMask)
             
             # TM for the skill level template and get the result
-            _, _, _, skillLevelResult, _ = subimageScaledSearch(skillSlotSubimage, imageScale, skillLevelTemplate, skillLevelMask)
+            _, _, _, skillLevelResult, _ = subimageScaledSearch(skillsSlotSubimage, imageScale, skillLevelTemplate, skillLevelMask)
             
             # check if our match result is better than our current best. if so update our variables
             if skillLevelResult < bestSkillLevelResult:
@@ -990,7 +838,7 @@ def getStudentGears(equipmentImage, imageScale, studentLevel):
     gearsSubimage, _, _, gearsSubimageResult, _ = subimageScaledSearch(equipmentImage, imageScale, GEARS_TEMPLATE_IMAGE, GEARS_MASK_IMAGE)    
     
     # get the gear slot count
-    gearCount = len(GEAR_SLOT_LEVEL_REQUIREMENTS)
+    gearCount = len(GEARS_SLOT_LEVEL_REQUIREMENTS)
 
     # array to keep track of our student's gear's tiers.
     # we premake it because even if student doesnt meet the level req,
@@ -1000,17 +848,17 @@ def getStudentGears(equipmentImage, imageScale, studentLevel):
     # go through all of our individual gears
     for gear in range(gearCount):
         # get the current gear's level req
-        gearSlotLevelRequirement = GEAR_SLOT_LEVEL_REQUIREMENTS[gear]
+        gearsSlotLevelRequirement = GEARS_SLOT_LEVEL_REQUIREMENTS[gear]
         
         # if student level isn't high enough, we break
-        if studentLevel < gearSlotLevelRequirement:
+        if studentLevel < gearsSlotLevelRequirement:
             break
         
         # get the respective gear mask
-        gearSlotMaskImage = GEAR_SLOT_MASK_IMAGES[gear]
+        gearsSlotMaskImage = GEARS_SLOT_MASK_IMAGES[gear]
         
         # get the gear subimage
-        gearSubimage = cropImageWithMask(gearsSubimage, gearSlotMaskImage)
+        gearSubimage = cropImageWithMask(gearsSubimage, gearsSlotMaskImage)
         
         # check if the current gear slot has anything equipped
         isGearEquipped = checkEquipped(gearSubimage, imageScale, GEAR_E_MASK_IMAGE, E_TEMPLATE_IMAGE, E_MASK_IMAGE, E_MATCH_THRESHOLD)
@@ -1049,7 +897,7 @@ def checkInfo(studentName, studentBond, studentLevel, studentStar, studentSkills
                             
                         
 
-
+##
 ##directory = "student example"
 ##scale = 1.0
 ##for fileName in os.listdir(directory):
@@ -1057,11 +905,15 @@ def checkInfo(studentName, studentBond, studentLevel, studentStar, studentSkills
 ##    
 ##    sourceImage = cv2.imread(f, cv2.IMREAD_COLOR)
 ##    
-####    scale = SCALE_CHEAT_SHEET[COUNTER]
-####    studentStar = STAR_CHEAT_SHEET[COUNTER]
-####    studentLevel = LEVEL_CHEAT_SHEET[COUNTER]
+##    scale = SCALE_CHEAT_SHEET[COUNTER]
+##    studentStar = STAR_CHEAT_SHEET[COUNTER]
+##    studentLevel = LEVEL_CHEAT_SHEET[COUNTER]
 ##        
 ##    print(f, scale)
+##
+##    print( EQUIPMENT_TEMPLATE_IMAGE)
+##    cv2.imshow("EQUIPMENT_TEMPLATE_IMAG", EQUIPMENT_TEMPLATE_IMAGE)
+##    cv2.imshow("EQUIPMENT_MASK_IMAGE", EQUIPMENT_MASK_IMAGE)
 ##    
 ##    equipmentImage, _, _, scale, _ = subimageMultiScaleSearch(sourceImage, EQUIPMENT_TEMPLATE_IMAGE, EQUIPMENT_MASK_IMAGE)
 ##    cv2.imshow("equipmentImage", equipmentImage)
@@ -1087,3 +939,80 @@ def main(sourceImage):
 
     
     return 1
+
+
+
+
+
+
+##### video scanner #####
+### USER RECORDING INSTRUCTIONS ###
+# if using bluestacks, there is a built in screen recorder that is very easy to use
+# please use any of the default landscape resolutions, or any resolution that is 16:9 aspect ratio
+# user will start with the student info open of any student before starting recording.
+# start the recording
+# click the right or left arrow on the screen in-game continuously, going through the students
+# should not have to worry about pictures like splash art, gear image, and ue image loading.
+#   all the info needed is loaded immediately, again do not worry. try to speedrun if you want.
+#   in fact, i think it'll make it faster for me if you click through quickly
+# do this until you eventually loop back to the initial character you had on screen before starting the recording
+# stop the recording
+
+### how to write the program ###
+# the first frame of the recording should be of a student that's already been completely properly loaded
+# off the first frame, locate stats window, and remember both location and first student's name, and maybe scale
+# afterwards, go frame-by-frame checking to see if the name in the stats window has updated
+#       if not, keep going. update our frames, prev and curr
+#       if so, take your previous frame and suck all the info out of it then update frames.
+#           thinking about maybe adding our sucked frames into an array to keep track of them
+
+
+# load a videofile given its name and go through it frame-by-frame. we grab the students' info from the frame
+# returns a list of students' info
+def suckFrames(videoFileName : str):
+    """yes"""
+    # basically load the video into this variable, acts similar to an array.
+    videoCapture = cv2.VideoCapture(videoFileName)
+    
+    # check if the video was opened properly
+    isOpened = videoCapture.isOpened()
+    
+    # check if anything opened
+    if isOpened == True:
+        ## here we grab the info from the first frame
+        # get the first frame
+        ret, frame = videoCapture.read()
+
+        # find the stat window from the first frame
+        statWindow, _, _, scale, _ = subimageMultiScaleSearch(sourceImage, EQUIPMENT_TEMPLATE_IMAGE, EQUIPMENT_MASK_IMAGE)
+
+        while ret:
+            print("hi")
+            break
+            
+
+        while isOpened:
+            print("yo")
+            
+    
+    # if nothing then something went wrong
+    else:
+        print("error opening")
+    
+    
+##    # if successfully opened, go through the frames one-by-one and grab the student info in the respective
+##    # student's last shown frame. this is to make sure that all their info is loaded in, as opposed to getting
+##    # their info the first frame they're shown as the game sometimes has a delay before all info is loaded onscreen
+##    while videoCapture.isOpened():
+##        # grab the frame, also has a return value to see if anything was returned
+##        ret, frame = videoCapture.read()
+##        
+##        # check if a frame was returned
+##        if ret == True:
+##            # if so,
+##            
+##        else:
+##            break
+##    videoCapture.release()
+
+

@@ -1,5 +1,6 @@
 import os
 import cv2
+import numpy as np
 
 
 
@@ -51,9 +52,10 @@ GEAR_TIERS_CHEAT_SHEET_ARRAY = [[0,0,0],[0,0,0],[0,0,0],[7,6,5],[7,7,6],[7,6,6],
 
 
 
+
+
+
 PATH_TO_TESSERACT = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-GEAR_X_OFFSET = 4
-GEAR_Y_OFFSET = 6
 
 BAD_COUNTER_MAX = 150000
 SCALE_INCREMENT = 0.01
@@ -140,10 +142,34 @@ TIER_MATCH_THRESHOLD = 0.04
 # also you want to use NORMED functions when template matching with templates of different sizes (ew're doing multiscale)
 TEMPLATE_MATCH_METHOD = cv2.TM_SQDIFF_NORMED
 
-SKILL_SLOT_STAR_REQUIREMENTS = [1, 1, 2, 3]
+
+
+
+# REQUIREMENTS
+# skills' character star requirement to unlock respective skill. index0 represents skill1, .... so far only 4 skills
+SKILLS_SLOT_STAR_REQUIREMENTS = [1, 1, 2, 3]
+SKILL_LEVEL_COUNT = [5, 10, 10, 10]
+
+# ue's character star requirement to unlock it. currently need 5 star. *** debating whether or not i should
+# make it go up to 7 star, for each upgrade in the ue's star.***
 UE_SLOT_STAR_REQUIREMENT = 5
-# array of what min level you need to be to unlock the respective gear slot. slot1=lvl0, slot2=lvl15, slot3=lvl35
-GEAR_SLOT_LEVEL_REQUIREMENTS = [0, 15, 35]
+
+# gears' character level requirement to unlock the respective gear. slot1=lvl0, slot2=lvl15, slot3=lvl35
+GEARS_SLOT_LEVEL_REQUIREMENTS = [0, 15, 35]
+
+
+
+
+
+
+# level templates and masks paths
+LEVELS_DIRECTORY_PATH = r"templates and masks\levels"
+BOND_LEVELS_DIRECTORY_PATH =  LEVELS_DIRECTORY_PATH + r"\bond"
+GEAR_LEVELS_DIRECTORY_PATH =  LEVELS_DIRECTORY_PATH + r"\gear"
+SKILL_LEVELS_DIRECTORY_PATH = LEVELS_DIRECTORY_PATH + r"\skill"
+STATS_LEVELS_DIRECTORY_PATH = LEVELS_DIRECTORY_PATH + r"\stats"
+TIER_LEVELS_DIRECTORY_PATH =  LEVELS_DIRECTORY_PATH + r"\tier"
+UE_LEVELS_DIRECTORY_PATH =    LEVELS_DIRECTORY_PATH + r"\ue"
 
 
 
@@ -154,100 +180,10 @@ STATS_MASK_IMAGE = cv2.imread("stats mask.png", cv2.IMREAD_GRAYSCALE)
 STATS_NAME_MASK_IMAGE = cv2.imread("stats name mask.png", cv2.IMREAD_GRAYSCALE)
 STATS_BOND_MASK_IMAGE = cv2.imread("stats bond mask.png", cv2.IMREAD_GRAYSCALE)
 STATS_LEVEL_MASK_IMAGE = cv2.imread("stats level mask.png", cv2.IMREAD_GRAYSCALE)
+STATS_STAR_MASK_IMAGE = cv2.imread("stats star mask.png", cv2.IMREAD_GRAYSCALE)
 
 NAME_ADDITION_IMAGE = cv2.imread("name addition.png", cv2.IMREAD_GRAYSCALE)
 
-BOND_LEVEL_TEMPLATE_IMAGES = []
-BOND_LEVEL_0_TEMPLATE_IMAGE = cv2.imread("bond level 0 template.png", cv2.IMREAD_COLOR)
-BOND_LEVEL_1_TEMPLATE_IMAGE = cv2.imread("bond level 1 template.png", cv2.IMREAD_COLOR)
-BOND_LEVEL_2_TEMPLATE_IMAGE = cv2.imread("bond level 2 template.png", cv2.IMREAD_COLOR)
-BOND_LEVEL_3_TEMPLATE_IMAGE = cv2.imread("bond level 3 template.png", cv2.IMREAD_COLOR)
-BOND_LEVEL_4_TEMPLATE_IMAGE = cv2.imread("bond level 4 template.png", cv2.IMREAD_COLOR)
-BOND_LEVEL_5_TEMPLATE_IMAGE = cv2.imread("bond level 5 template.png", cv2.IMREAD_COLOR)
-BOND_LEVEL_6_TEMPLATE_IMAGE = cv2.imread("bond level 6 template.png", cv2.IMREAD_COLOR)
-BOND_LEVEL_7_TEMPLATE_IMAGE = cv2.imread("bond level 7 template.png", cv2.IMREAD_COLOR)
-BOND_LEVEL_8_TEMPLATE_IMAGE = cv2.imread("bond level 8 template.png", cv2.IMREAD_COLOR)
-BOND_LEVEL_9_TEMPLATE_IMAGE = cv2.imread("bond level 9 template.png", cv2.IMREAD_COLOR)
-BOND_LEVEL_TEMPLATE_IMAGES.append(BOND_LEVEL_0_TEMPLATE_IMAGE)
-BOND_LEVEL_TEMPLATE_IMAGES.append(BOND_LEVEL_1_TEMPLATE_IMAGE)
-BOND_LEVEL_TEMPLATE_IMAGES.append(BOND_LEVEL_2_TEMPLATE_IMAGE)
-BOND_LEVEL_TEMPLATE_IMAGES.append(BOND_LEVEL_3_TEMPLATE_IMAGE)
-BOND_LEVEL_TEMPLATE_IMAGES.append(BOND_LEVEL_4_TEMPLATE_IMAGE)
-BOND_LEVEL_TEMPLATE_IMAGES.append(BOND_LEVEL_5_TEMPLATE_IMAGE)
-BOND_LEVEL_TEMPLATE_IMAGES.append(BOND_LEVEL_6_TEMPLATE_IMAGE)
-BOND_LEVEL_TEMPLATE_IMAGES.append(BOND_LEVEL_7_TEMPLATE_IMAGE)
-BOND_LEVEL_TEMPLATE_IMAGES.append(BOND_LEVEL_8_TEMPLATE_IMAGE)
-BOND_LEVEL_TEMPLATE_IMAGES.append(BOND_LEVEL_9_TEMPLATE_IMAGE)
-
-BOND_LEVEL_MASK_IMAGES = []
-BOND_LEVEL_0_MASK_IMAGE = cv2.imread("bond level 0 mask.png", cv2.IMREAD_GRAYSCALE)
-BOND_LEVEL_1_MASK_IMAGE = cv2.imread("bond level 1 mask.png", cv2.IMREAD_GRAYSCALE)
-BOND_LEVEL_2_MASK_IMAGE = cv2.imread("bond level 2 mask.png", cv2.IMREAD_GRAYSCALE)
-BOND_LEVEL_3_MASK_IMAGE = cv2.imread("bond level 3 mask.png", cv2.IMREAD_GRAYSCALE)
-BOND_LEVEL_4_MASK_IMAGE = cv2.imread("bond level 4 mask.png", cv2.IMREAD_GRAYSCALE)
-BOND_LEVEL_5_MASK_IMAGE = cv2.imread("bond level 5 mask.png", cv2.IMREAD_GRAYSCALE)
-BOND_LEVEL_6_MASK_IMAGE = cv2.imread("bond level 6 mask.png", cv2.IMREAD_GRAYSCALE)
-BOND_LEVEL_7_MASK_IMAGE = cv2.imread("bond level 7 mask.png", cv2.IMREAD_GRAYSCALE)
-BOND_LEVEL_8_MASK_IMAGE = cv2.imread("bond level 8 mask.png", cv2.IMREAD_GRAYSCALE)
-BOND_LEVEL_9_MASK_IMAGE = cv2.imread("bond level 9 mask.png", cv2.IMREAD_GRAYSCALE)
-BOND_LEVEL_MASK_IMAGES.append(BOND_LEVEL_0_MASK_IMAGE)
-BOND_LEVEL_MASK_IMAGES.append(BOND_LEVEL_1_MASK_IMAGE)
-BOND_LEVEL_MASK_IMAGES.append(BOND_LEVEL_2_MASK_IMAGE)
-BOND_LEVEL_MASK_IMAGES.append(BOND_LEVEL_3_MASK_IMAGE)
-BOND_LEVEL_MASK_IMAGES.append(BOND_LEVEL_4_MASK_IMAGE)
-BOND_LEVEL_MASK_IMAGES.append(BOND_LEVEL_5_MASK_IMAGE)
-BOND_LEVEL_MASK_IMAGES.append(BOND_LEVEL_6_MASK_IMAGE)
-BOND_LEVEL_MASK_IMAGES.append(BOND_LEVEL_7_MASK_IMAGE)
-BOND_LEVEL_MASK_IMAGES.append(BOND_LEVEL_8_MASK_IMAGE)
-BOND_LEVEL_MASK_IMAGES.append(BOND_LEVEL_9_MASK_IMAGE)
-
-
-STATS_LEVEL_TEMPLATE_IMAGES = []
-STATS_LEVEL_0_TEMPLATE_IMAGE = cv2.imread("stats level 0 template.png", cv2.IMREAD_COLOR)
-STATS_LEVEL_1_TEMPLATE_IMAGE = cv2.imread("stats level 1 template.png", cv2.IMREAD_COLOR)
-STATS_LEVEL_2_TEMPLATE_IMAGE = cv2.imread("stats level 2 template.png", cv2.IMREAD_COLOR)
-STATS_LEVEL_3_TEMPLATE_IMAGE = cv2.imread("stats level 3 template.png", cv2.IMREAD_COLOR)
-STATS_LEVEL_4_TEMPLATE_IMAGE = cv2.imread("stats level 4 template.png", cv2.IMREAD_COLOR)
-STATS_LEVEL_5_TEMPLATE_IMAGE = cv2.imread("stats level 5 template.png", cv2.IMREAD_COLOR)
-STATS_LEVEL_6_TEMPLATE_IMAGE = cv2.imread("stats level 6 template.png", cv2.IMREAD_COLOR)
-STATS_LEVEL_7_TEMPLATE_IMAGE = cv2.imread("stats level 7 template.png", cv2.IMREAD_COLOR)
-STATS_LEVEL_8_TEMPLATE_IMAGE = cv2.imread("stats level 8 template.png", cv2.IMREAD_COLOR)
-STATS_LEVEL_9_TEMPLATE_IMAGE = cv2.imread("stats level 9 template.png", cv2.IMREAD_COLOR)
-STATS_LEVEL_TEMPLATE_IMAGES.append(STATS_LEVEL_0_TEMPLATE_IMAGE)
-STATS_LEVEL_TEMPLATE_IMAGES.append(STATS_LEVEL_1_TEMPLATE_IMAGE)
-STATS_LEVEL_TEMPLATE_IMAGES.append(STATS_LEVEL_2_TEMPLATE_IMAGE)
-STATS_LEVEL_TEMPLATE_IMAGES.append(STATS_LEVEL_3_TEMPLATE_IMAGE)
-STATS_LEVEL_TEMPLATE_IMAGES.append(STATS_LEVEL_4_TEMPLATE_IMAGE)
-STATS_LEVEL_TEMPLATE_IMAGES.append(STATS_LEVEL_5_TEMPLATE_IMAGE)
-STATS_LEVEL_TEMPLATE_IMAGES.append(STATS_LEVEL_6_TEMPLATE_IMAGE)
-STATS_LEVEL_TEMPLATE_IMAGES.append(STATS_LEVEL_7_TEMPLATE_IMAGE)
-STATS_LEVEL_TEMPLATE_IMAGES.append(STATS_LEVEL_8_TEMPLATE_IMAGE)
-STATS_LEVEL_TEMPLATE_IMAGES.append(STATS_LEVEL_9_TEMPLATE_IMAGE)
-
-STATS_LEVEL_MASK_IMAGES = []
-STATS_LEVEL_0_MASK_IMAGE = cv2.imread("stats level 0 mask.png", cv2.IMREAD_GRAYSCALE)
-STATS_LEVEL_1_MASK_IMAGE = cv2.imread("stats level 1 mask.png", cv2.IMREAD_GRAYSCALE)
-STATS_LEVEL_2_MASK_IMAGE = cv2.imread("stats level 2 mask.png", cv2.IMREAD_GRAYSCALE)
-STATS_LEVEL_3_MASK_IMAGE = cv2.imread("stats level 3 mask.png", cv2.IMREAD_GRAYSCALE)
-STATS_LEVEL_4_MASK_IMAGE = cv2.imread("stats level 4 mask.png", cv2.IMREAD_GRAYSCALE)
-STATS_LEVEL_5_MASK_IMAGE = cv2.imread("stats level 5 mask.png", cv2.IMREAD_GRAYSCALE)
-STATS_LEVEL_6_MASK_IMAGE = cv2.imread("stats level 6 mask.png", cv2.IMREAD_GRAYSCALE)
-STATS_LEVEL_7_MASK_IMAGE = cv2.imread("stats level 7 mask.png", cv2.IMREAD_GRAYSCALE)
-STATS_LEVEL_8_MASK_IMAGE = cv2.imread("stats level 8 mask.png", cv2.IMREAD_GRAYSCALE)
-STATS_LEVEL_9_MASK_IMAGE = cv2.imread("stats level 9 mask.png", cv2.IMREAD_GRAYSCALE)
-STATS_LEVEL_MASK_IMAGES.append(STATS_LEVEL_0_MASK_IMAGE)
-STATS_LEVEL_MASK_IMAGES.append(STATS_LEVEL_1_MASK_IMAGE)
-STATS_LEVEL_MASK_IMAGES.append(STATS_LEVEL_2_MASK_IMAGE)
-STATS_LEVEL_MASK_IMAGES.append(STATS_LEVEL_3_MASK_IMAGE)
-STATS_LEVEL_MASK_IMAGES.append(STATS_LEVEL_4_MASK_IMAGE)
-STATS_LEVEL_MASK_IMAGES.append(STATS_LEVEL_5_MASK_IMAGE)
-STATS_LEVEL_MASK_IMAGES.append(STATS_LEVEL_6_MASK_IMAGE)
-STATS_LEVEL_MASK_IMAGES.append(STATS_LEVEL_7_MASK_IMAGE)
-STATS_LEVEL_MASK_IMAGES.append(STATS_LEVEL_8_MASK_IMAGE)
-STATS_LEVEL_MASK_IMAGES.append(STATS_LEVEL_9_MASK_IMAGE)
-
-
-STATS_STAR_MASK_IMAGE = cv2.imread("stats star mask.png", cv2.IMREAD_GRAYSCALE)
 STAR_TEMPLATE_IMAGE = cv2.imread("star template.png", cv2.IMREAD_COLOR)
 STAR_MASK_IMAGE = cv2.imread("star mask.png", cv2.IMREAD_GRAYSCALE)
 
@@ -259,78 +195,12 @@ EQUIPMENT_MASK_IMAGE = cv2.imread("equipment mask.png", cv2.IMREAD_GRAYSCALE)
 
 # SKILLS templates and masks
 SKILLS_TEMPLATE_IMAGE = cv2.imread("skills template.png", cv2.IMREAD_COLOR)
-SKILLS_MASK_IMAGES = []
-SKILLS_1_STAR_MASK_IMAGE = cv2.imread("skills 1 star mask.png", cv2.IMREAD_GRAYSCALE)
-SKILLS_2_STAR_MASK_IMAGE = cv2.imread("skills 2 star mask.png", cv2.IMREAD_GRAYSCALE)
-SKILLS_MASK_IMAGES.append(SKILLS_1_STAR_MASK_IMAGE)
-SKILLS_MASK_IMAGES.append(SKILLS_2_STAR_MASK_IMAGE)
-SKILLS_MASK_IMAGES.append(None)
-SKILLS_MASK_IMAGES.append(None)
-SKILLS_MASK_IMAGES.append(None)
-
-SKILL_SLOT_MASK_IMAGES = []
-SKILL_SLOT_1_MASK_IMAGE = cv2.imread("skill slot 1 mask.png", cv2.IMREAD_GRAYSCALE)
-SKILL_SLOT_2_MASK_IMAGE = cv2.imread("skill slot 2 mask.png", cv2.IMREAD_GRAYSCALE)
-SKILL_SLOT_3_MASK_IMAGE = cv2.imread("skill slot 3 mask.png", cv2.IMREAD_GRAYSCALE)
-SKILL_SLOT_4_MASK_IMAGE = cv2.imread("skill slot 4 mask.png", cv2.IMREAD_GRAYSCALE)
-SKILL_SLOT_MASK_IMAGES.append(SKILL_SLOT_1_MASK_IMAGE)
-SKILL_SLOT_MASK_IMAGES.append(SKILL_SLOT_2_MASK_IMAGE)
-SKILL_SLOT_MASK_IMAGES.append(SKILL_SLOT_3_MASK_IMAGE)
-SKILL_SLOT_MASK_IMAGES.append(SKILL_SLOT_4_MASK_IMAGE)
-
-SKILL_LEVEL_COUNT = [5, 10, 10, 10]
-
-SKILL_LEVEL_TEMPLATE_IMAGES = []
-SKILL_LEVEL_MAX_TEMPLATE_IMAGE = cv2.imread("skill level max template.png", cv2.IMREAD_COLOR)
-SKILL_LEVEL_1_TEMPLATE_IMAGE = cv2.imread("skill level 1 template.png", cv2.IMREAD_COLOR)
-SKILL_LEVEL_2_TEMPLATE_IMAGE = cv2.imread("skill level 2 template.png", cv2.IMREAD_COLOR)
-SKILL_LEVEL_3_TEMPLATE_IMAGE = cv2.imread("skill level 3 template.png", cv2.IMREAD_COLOR)
-SKILL_LEVEL_4_TEMPLATE_IMAGE = cv2.imread("skill level 4 template.png", cv2.IMREAD_COLOR)
-SKILL_LEVEL_5_TEMPLATE_IMAGE = cv2.imread("skill level 5 template.png", cv2.IMREAD_COLOR)
-SKILL_LEVEL_6_TEMPLATE_IMAGE = cv2.imread("skill level 6 template.png", cv2.IMREAD_COLOR)
-SKILL_LEVEL_7_TEMPLATE_IMAGE = cv2.imread("skill level 7 template.png", cv2.IMREAD_COLOR)
-SKILL_LEVEL_8_TEMPLATE_IMAGE = cv2.imread("skill level 8 template.png", cv2.IMREAD_COLOR)
-SKILL_LEVEL_9_TEMPLATE_IMAGE = cv2.imread("skill level 9 template.png", cv2.IMREAD_COLOR)
-SKILL_LEVEL_TEMPLATE_IMAGES.append(SKILL_LEVEL_MAX_TEMPLATE_IMAGE)
-SKILL_LEVEL_TEMPLATE_IMAGES.append(SKILL_LEVEL_1_TEMPLATE_IMAGE)
-SKILL_LEVEL_TEMPLATE_IMAGES.append(SKILL_LEVEL_2_TEMPLATE_IMAGE)
-SKILL_LEVEL_TEMPLATE_IMAGES.append(SKILL_LEVEL_3_TEMPLATE_IMAGE)
-SKILL_LEVEL_TEMPLATE_IMAGES.append(SKILL_LEVEL_4_TEMPLATE_IMAGE)
-SKILL_LEVEL_TEMPLATE_IMAGES.append(SKILL_LEVEL_5_TEMPLATE_IMAGE)
-SKILL_LEVEL_TEMPLATE_IMAGES.append(SKILL_LEVEL_6_TEMPLATE_IMAGE)
-SKILL_LEVEL_TEMPLATE_IMAGES.append(SKILL_LEVEL_7_TEMPLATE_IMAGE)
-SKILL_LEVEL_TEMPLATE_IMAGES.append(SKILL_LEVEL_8_TEMPLATE_IMAGE)
-SKILL_LEVEL_TEMPLATE_IMAGES.append(SKILL_LEVEL_9_TEMPLATE_IMAGE)
-
-SKILL_LEVEL_MASK_IMAGES = []
-SKILL_LEVEL_MAX_MASK_IMAGE = cv2.imread("skill level max mask.png", cv2.IMREAD_GRAYSCALE)
-SKILL_LEVEL_1_MASK_IMAGE = cv2.imread("skill level 1 mask.png", cv2.IMREAD_GRAYSCALE)
-SKILL_LEVEL_2_MASK_IMAGE = cv2.imread("skill level 2 mask.png", cv2.IMREAD_GRAYSCALE)
-SKILL_LEVEL_3_MASK_IMAGE = cv2.imread("skill level 3 mask.png", cv2.IMREAD_GRAYSCALE)
-SKILL_LEVEL_4_MASK_IMAGE = cv2.imread("skill level 4 mask.png", cv2.IMREAD_GRAYSCALE)
-SKILL_LEVEL_5_MASK_IMAGE = cv2.imread("skill level 5 mask.png", cv2.IMREAD_GRAYSCALE)
-SKILL_LEVEL_6_MASK_IMAGE = cv2.imread("skill level 6 mask.png", cv2.IMREAD_GRAYSCALE)
-SKILL_LEVEL_7_MASK_IMAGE = cv2.imread("skill level 7 mask.png", cv2.IMREAD_GRAYSCALE)
-SKILL_LEVEL_8_MASK_IMAGE = cv2.imread("skill level 8 mask.png", cv2.IMREAD_GRAYSCALE)
-SKILL_LEVEL_9_MASK_IMAGE = cv2.imread("skill level 9 mask.png", cv2.IMREAD_GRAYSCALE)
-SKILL_LEVEL_MASK_IMAGES.append(SKILL_LEVEL_MAX_MASK_IMAGE)
-SKILL_LEVEL_MASK_IMAGES.append(SKILL_LEVEL_1_MASK_IMAGE)
-SKILL_LEVEL_MASK_IMAGES.append(SKILL_LEVEL_2_MASK_IMAGE)
-SKILL_LEVEL_MASK_IMAGES.append(SKILL_LEVEL_3_MASK_IMAGE)
-SKILL_LEVEL_MASK_IMAGES.append(SKILL_LEVEL_4_MASK_IMAGE)
-SKILL_LEVEL_MASK_IMAGES.append(SKILL_LEVEL_5_MASK_IMAGE)
-SKILL_LEVEL_MASK_IMAGES.append(SKILL_LEVEL_6_MASK_IMAGE)
-SKILL_LEVEL_MASK_IMAGES.append(SKILL_LEVEL_7_MASK_IMAGE)
-SKILL_LEVEL_MASK_IMAGES.append(SKILL_LEVEL_8_MASK_IMAGE)
-SKILL_LEVEL_MASK_IMAGES.append(SKILL_LEVEL_9_MASK_IMAGE)
-
-##SKILL_LEVEL_MAX_TEMPLATE_IMAGE = cv2.imread("skill level max template.png", cv2.IMREAD_COLOR)
-##SKILL_LEVEL_MAX_MASK_IMAGE = cv2.imread("skill level max mask.png", cv2.IMREAD_GRAYSCALE)
 
 
 # UE templates and masks
 UE_TEMPLATE_IMAGE = cv2.imread("ue template.png", cv2.IMREAD_COLOR)
 UE_MASK_IMAGE = cv2.imread("ue mask.png", cv2.IMREAD_GRAYSCALE)
+
 UE_E_MASK_IMAGE = cv2.imread("ue E mask.png", cv2.IMREAD_GRAYSCALE)
 UE_STAR_MASK_IMAGE = cv2.imread("ue star mask.png", cv2.IMREAD_GRAYSCALE)
 UE_LEVEL_MASK_IMAGE = cv2.imread("ue level mask.png", cv2.IMREAD_GRAYSCALE)
@@ -341,63 +211,10 @@ STAR_UE_MASK_IMAGE = cv2.imread("star ue mask.png", cv2.IMREAD_GRAYSCALE)
 E_UE_TEMPLATE_IMAGE = cv2.imread("E ue template.png", cv2.IMREAD_COLOR)
 E_UE_MASK_IMAGE = cv2.imread("E ue mask.png", cv2.IMREAD_GRAYSCALE)
 
-UE_LEVEL_TEMPLATE_IMAGES = []
-UE_LEVEL_0_TEMPLATE_IMAGE = cv2.imread("ue level 0 template.png", cv2.IMREAD_COLOR)
-UE_LEVEL_1_TEMPLATE_IMAGE = cv2.imread("ue level 1 template.png", cv2.IMREAD_COLOR)
-UE_LEVEL_2_TEMPLATE_IMAGE = cv2.imread("ue level 2 template.png", cv2.IMREAD_COLOR)
-UE_LEVEL_3_TEMPLATE_IMAGE = cv2.imread("ue level 3 template.png", cv2.IMREAD_COLOR)
-UE_LEVEL_4_TEMPLATE_IMAGE = cv2.imread("ue level 4 template.png", cv2.IMREAD_COLOR)
-UE_LEVEL_5_TEMPLATE_IMAGE = cv2.imread("ue level 5 template.png", cv2.IMREAD_COLOR)
-UE_LEVEL_6_TEMPLATE_IMAGE = cv2.imread("ue level 6 template.png", cv2.IMREAD_COLOR)
-UE_LEVEL_7_TEMPLATE_IMAGE = cv2.imread("ue level 7 template.png", cv2.IMREAD_COLOR)
-UE_LEVEL_8_TEMPLATE_IMAGE = cv2.imread("ue level 8 template.png", cv2.IMREAD_COLOR)
-UE_LEVEL_9_TEMPLATE_IMAGE = cv2.imread("ue level 9 template.png", cv2.IMREAD_COLOR)
-UE_LEVEL_TEMPLATE_IMAGES.append(UE_LEVEL_0_TEMPLATE_IMAGE)
-UE_LEVEL_TEMPLATE_IMAGES.append(UE_LEVEL_1_TEMPLATE_IMAGE)
-UE_LEVEL_TEMPLATE_IMAGES.append(UE_LEVEL_2_TEMPLATE_IMAGE)
-UE_LEVEL_TEMPLATE_IMAGES.append(UE_LEVEL_3_TEMPLATE_IMAGE)
-UE_LEVEL_TEMPLATE_IMAGES.append(UE_LEVEL_4_TEMPLATE_IMAGE)
-UE_LEVEL_TEMPLATE_IMAGES.append(UE_LEVEL_5_TEMPLATE_IMAGE)
-UE_LEVEL_TEMPLATE_IMAGES.append(UE_LEVEL_6_TEMPLATE_IMAGE)
-UE_LEVEL_TEMPLATE_IMAGES.append(UE_LEVEL_7_TEMPLATE_IMAGE)
-UE_LEVEL_TEMPLATE_IMAGES.append(UE_LEVEL_8_TEMPLATE_IMAGE)
-UE_LEVEL_TEMPLATE_IMAGES.append(UE_LEVEL_9_TEMPLATE_IMAGE)
-
-UE_LEVEL_MASK_IMAGES = []
-UE_LEVEL_0_MASK_IMAGE = cv2.imread("ue level 0 mask.png", cv2.IMREAD_GRAYSCALE)
-UE_LEVEL_1_MASK_IMAGE = cv2.imread("ue level 1 mask.png", cv2.IMREAD_GRAYSCALE)
-UE_LEVEL_2_MASK_IMAGE = cv2.imread("ue level 2 mask.png", cv2.IMREAD_GRAYSCALE)
-UE_LEVEL_3_MASK_IMAGE = cv2.imread("ue level 3 mask.png", cv2.IMREAD_GRAYSCALE)
-UE_LEVEL_4_MASK_IMAGE = cv2.imread("ue level 4 mask.png", cv2.IMREAD_GRAYSCALE)
-UE_LEVEL_5_MASK_IMAGE = cv2.imread("ue level 5 mask.png", cv2.IMREAD_GRAYSCALE)
-UE_LEVEL_6_MASK_IMAGE = cv2.imread("ue level 6 mask.png", cv2.IMREAD_GRAYSCALE)
-UE_LEVEL_7_MASK_IMAGE = cv2.imread("ue level 7 mask.png", cv2.IMREAD_GRAYSCALE)
-UE_LEVEL_8_MASK_IMAGE = cv2.imread("ue level 8 mask.png", cv2.IMREAD_GRAYSCALE)
-UE_LEVEL_9_MASK_IMAGE = cv2.imread("ue level 9 mask.png", cv2.IMREAD_GRAYSCALE)
-UE_LEVEL_MASK_IMAGES.append(UE_LEVEL_0_MASK_IMAGE)
-UE_LEVEL_MASK_IMAGES.append(UE_LEVEL_1_MASK_IMAGE)
-UE_LEVEL_MASK_IMAGES.append(UE_LEVEL_2_MASK_IMAGE)
-UE_LEVEL_MASK_IMAGES.append(UE_LEVEL_3_MASK_IMAGE)
-UE_LEVEL_MASK_IMAGES.append(UE_LEVEL_4_MASK_IMAGE)
-UE_LEVEL_MASK_IMAGES.append(UE_LEVEL_5_MASK_IMAGE)
-UE_LEVEL_MASK_IMAGES.append(UE_LEVEL_6_MASK_IMAGE)
-UE_LEVEL_MASK_IMAGES.append(UE_LEVEL_7_MASK_IMAGE)
-UE_LEVEL_MASK_IMAGES.append(UE_LEVEL_8_MASK_IMAGE)
-UE_LEVEL_MASK_IMAGES.append(UE_LEVEL_9_MASK_IMAGE)
-
-
 
 # GEARS tempaltes and masks
 GEARS_TEMPLATE_IMAGE = cv2.imread("gears template.png", cv2.IMREAD_COLOR)
 GEARS_MASK_IMAGE = cv2.imread("gears mask.png", cv2.IMREAD_GRAYSCALE)
-
-GEAR_SLOT_MASK_IMAGES = []
-GEAR_SLOT_1_MASK_IMAGE = cv2.imread("gear slot 1 mask.png", cv2.IMREAD_GRAYSCALE)
-GEAR_SLOT_2_MASK_IMAGE = cv2.imread("gear slot 2 mask.png", cv2.IMREAD_GRAYSCALE)
-GEAR_SLOT_3_MASK_IMAGE = cv2.imread("gear slot 3 mask.png", cv2.IMREAD_GRAYSCALE)
-GEAR_SLOT_MASK_IMAGES.append(GEAR_SLOT_1_MASK_IMAGE)
-GEAR_SLOT_MASK_IMAGES.append(GEAR_SLOT_2_MASK_IMAGE)
-GEAR_SLOT_MASK_IMAGES.append(GEAR_SLOT_3_MASK_IMAGE)
 
 GEAR_E_MASK_IMAGE = cv2.imread("gear E mask.png", cv2.IMREAD_GRAYSCALE)
 GEAR_TIER_MASK_IMAGE = cv2.imread("gear tier mask.png", cv2.IMREAD_GRAYSCALE)
@@ -405,51 +222,106 @@ GEAR_TIER_MASK_IMAGE = cv2.imread("gear tier mask.png", cv2.IMREAD_GRAYSCALE)
 E_TEMPLATE_IMAGE = cv2.imread("E template.png", cv2.IMREAD_COLOR)
 E_MASK_IMAGE = cv2.imread("E mask.png", cv2.IMREAD_GRAYSCALE)
 
-TIER_LEVEL_TEMPLATE_IMAGES_DIRECTORY_PATH = r"templates and masks\level\skill\masks"
-TIER_LEVEL_TEMPLATE_IMAGES = []
-TIER_1_TEMPLATE_IMAGE = cv2.imread("tier 1 template.png", cv2.IMREAD_COLOR)
-TIER_2_TEMPLATE_IMAGE = cv2.imread("tier 2 template.png", cv2.IMREAD_COLOR)
-TIER_3_TEMPLATE_IMAGE = cv2.imread("tier 3 template.png", cv2.IMREAD_COLOR)
-TIER_4_TEMPLATE_IMAGE = cv2.imread("tier 4 template.png", cv2.IMREAD_COLOR)
-TIER_5_TEMPLATE_IMAGE = cv2.imread("tier 5 template.png", cv2.IMREAD_COLOR)
-TIER_6_TEMPLATE_IMAGE = cv2.imread("tier 6 template.png", cv2.IMREAD_COLOR)
-TIER_7_TEMPLATE_IMAGE = cv2.imread("tier 7 template.png", cv2.IMREAD_COLOR)
-TIER_LEVEL_TEMPLATE_IMAGES.append(TIER_1_TEMPLATE_IMAGE)
-TIER_LEVEL_TEMPLATE_IMAGES.append(TIER_2_TEMPLATE_IMAGE)
-TIER_LEVEL_TEMPLATE_IMAGES.append(TIER_3_TEMPLATE_IMAGE)
-TIER_LEVEL_TEMPLATE_IMAGES.append(TIER_4_TEMPLATE_IMAGE)
-TIER_LEVEL_TEMPLATE_IMAGES.append(TIER_5_TEMPLATE_IMAGE)
-TIER_LEVEL_TEMPLATE_IMAGES.append(TIER_6_TEMPLATE_IMAGE)
-TIER_LEVEL_TEMPLATE_IMAGES.append(TIER_7_TEMPLATE_IMAGE)
+
+
+
+def readLevelsImagesToArrays(levelsDirectory):
+    levelsTemplatesDirectory = levelsDirectory + r"\templates"
+    levelsMasksDirectory = levelsDirectory + r"\masks"
+    
+    templatesArray = readLevelsImagesToArray(levelsTemplatesDirectory, cv2.IMREAD_COLOR)
+    masksArray = readLevelsImagesToArray(levelsMasksDirectory, cv2.IMREAD_GRAYSCALE)
+    
+
+    return templatesArray, masksArray
+
+
+def readLevelsImagesToArray(levelsDirectory, imReadColor):
+    imagesArray = []
+    
+    for fileName in os.listdir(levelsDirectory):
+        
+        filePath = os.path.join(levelsDirectory, fileName)
+        
+        image = cv2.imread(filePath, imReadColor)
+            
+        imagesArray.append(image)
+
+    return imagesArray
+
+
+BOND_LEVEL_TEMPLATE_IMAGES, BOND_LEVEL_MASK_IMAGES = readLevelsImagesToArrays(BOND_LEVELS_DIRECTORY_PATH)
+GEAR_LEVEL_TEMPLATE_IMAGES, GEAR_LEVEL_MASK_IMAGES = readLevelsImagesToArrays(GEAR_LEVELS_DIRECTORY_PATH)
+SKILL_LEVEL_TEMPLATE_IMAGES, SKILL_LEVEL_MASK_IMAGES = readLevelsImagesToArrays(SKILL_LEVELS_DIRECTORY_PATH)
+STATS_LEVEL_TEMPLATE_IMAGES, STATS_LEVEL_MASK_IMAGES = readLevelsImagesToArrays(STATS_LEVELS_DIRECTORY_PATH)
+UE_LEVEL_TEMPLATE_IMAGES, UE_LEVEL_MASK_IMAGES = readLevelsImagesToArrays(UE_LEVELS_DIRECTORY_PATH)
+
+TIER_LEVEL_TEMPLATES_DIRECTORY_PATH = TIER_LEVELS_DIRECTORY_PATH  + r"\templates"
+TIER_LEVEL_TEMPLATE_IMAGES = readLevelsImagesToArray(TIER_LEVEL_TEMPLATES_DIRECTORY_PATH, cv2.IMREAD_COLOR)
 TIER_LEVEL_MASK_IMAGE = cv2.imread("tier level mask.png", cv2.IMREAD_GRAYSCALE)
 
-##def readImagesToArray(directory):
-##    array = []
-##    
-##    if
-##    
-##    for fileName in os.listdir(directory):
-##        filePath = os.path.join(directory, fileName)
-##        
-##        if "template" in fileName:
-##            image = cv2.imread(filePath, cv2.IMREAD_COLOR)
-##        else:
-##            image = cv2.imread(filePath, cv2.IMREAD_GRAYSCALE)
-##            
-##        array.append(image)
-##
-##    return array
-##directory = r"templates and masks\levels\bond\templates"
-##directory = r"templates and masks\levels\bond\masks"
-##directory = r"templates and masks\levels\gear\templates"
-##directory = r"templates and masks\levels\gear\masks"
-##directory = r"templates and masks\levels\skill\templates"
-##directory = r"templates and masks\levels\skill\masks"
-##directory = r"templates and masks\levels\stats\templates"
-##directory = r"templates and masks\levels\stats\masks"
-##directory = r"templates and masks\levels\tier\templates"
-##directory = r"templates and masks\levels\tier\masks"
-##directory = r"templates and masks\levels\ue\templates"
-##directory = r"templates and masks\levels\ue\masks"
 
-##readImagesToArray(directory)
+
+
+GEARS_SLOT_MASK_IMAGES = []
+GEARS_SLOT_1_MASK_IMAGE = cv2.imread("gears slot 1 mask.png", cv2.IMREAD_GRAYSCALE)
+GEARS_SLOT_2_MASK_IMAGE = cv2.imread("gears slot 2 mask.png", cv2.IMREAD_GRAYSCALE)
+GEARS_SLOT_3_MASK_IMAGE = cv2.imread("gears slot 3 mask.png", cv2.IMREAD_GRAYSCALE)
+GEARS_SLOT_MASK_IMAGES.append(GEARS_SLOT_1_MASK_IMAGE)
+GEARS_SLOT_MASK_IMAGES.append(GEARS_SLOT_2_MASK_IMAGE)
+GEARS_SLOT_MASK_IMAGES.append(GEARS_SLOT_3_MASK_IMAGE)
+
+SKILLS_MASK_IMAGES = []
+SKILLS_1_STAR_MASK_IMAGE = cv2.imread("skills 1 star mask.png", cv2.IMREAD_GRAYSCALE)
+SKILLS_2_STAR_MASK_IMAGE = cv2.imread("skills 2 star mask.png", cv2.IMREAD_GRAYSCALE)
+SKILLS_MASK_IMAGES.append(SKILLS_1_STAR_MASK_IMAGE)
+SKILLS_MASK_IMAGES.append(SKILLS_2_STAR_MASK_IMAGE)
+SKILLS_MASK_IMAGES.append(None)
+SKILLS_MASK_IMAGES.append(None)
+SKILLS_MASK_IMAGES.append(None)
+
+SKILLS_SLOT_MASK_IMAGES = []
+SKILLS_SLOT_1_MASK_IMAGE = cv2.imread("skills slot 1 mask.png", cv2.IMREAD_GRAYSCALE)
+SKILLS_SLOT_2_MASK_IMAGE = cv2.imread("skills slot 2 mask.png", cv2.IMREAD_GRAYSCALE)
+SKILLS_SLOT_3_MASK_IMAGE = cv2.imread("skills slot 3 mask.png", cv2.IMREAD_GRAYSCALE)
+SKILLS_SLOT_4_MASK_IMAGE = cv2.imread("skills slot 4 mask.png", cv2.IMREAD_GRAYSCALE)
+SKILLS_SLOT_MASK_IMAGES.append(SKILLS_SLOT_1_MASK_IMAGE)
+SKILLS_SLOT_MASK_IMAGES.append(SKILLS_SLOT_2_MASK_IMAGE)
+SKILLS_SLOT_MASK_IMAGES.append(SKILLS_SLOT_3_MASK_IMAGE)
+SKILLS_SLOT_MASK_IMAGES.append(SKILLS_SLOT_4_MASK_IMAGE)
+
+
+
+
+
+
+counter = 0
+def printImagesFromArray(imagesArray, counter):
+    for image in imagesArray:
+        cv2.imshow(str(counter), image)
+        counter += 1
+
+    return counter
+##
+##counter = printImagesFromArray(BOND_LEVEL_TEMPLATE_IMAGES, counter)
+##counter = printImagesFromArray(GEAR_LEVEL_TEMPLATE_IMAGES, counter)
+##counter = printImagesFromArray(SKILL_LEVEL_TEMPLATE_IMAGES, counter)
+##counter = printImagesFromArray(STATS_LEVEL_TEMPLATE_IMAGES, counter)
+##counter = printImagesFromArray(TIER_LEVEL_TEMPLATE_IMAGES, counter)
+##counter = printImagesFromArray(UE_LEVEL_TEMPLATE_IMAGES, counter)
+
+
+
+def compareTwoImageLists(imageList1, imageList2):
+    print(len(imageList1))
+    for counter in range(len(imageList1)):
+        
+        cv2.imshow("imageList1 " + str(counter), imageList1[counter])
+        cv2.imshow("imageList2 " + str(counter), imageList2[counter])
+        
+        comparison = imageList1[counter] == imageList2[counter]
+        
+        if comparison.all():
+            print("true")
+        else:
+            print("false")
