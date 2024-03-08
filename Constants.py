@@ -56,6 +56,9 @@ GEAR_TIERS_CHEAT_SHEET_ARRAY = [[0,0,0],[0,0,0],[0,0,0],[7,6,5],[7,7,6],[7,6,6],
 
 
 PATH_TO_TESSERACT = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+##print(os.getcwd())
+os.chdir(r"templates and masks")
+##print(os.getcwd())
 
 BAD_COUNTER_MAX = 150000
 SCALE_INCREMENT = 0.01
@@ -148,7 +151,7 @@ TEMPLATE_MATCH_METHOD = cv2.TM_SQDIFF_NORMED
 # REQUIREMENTS
 # skills' character star requirement to unlock respective skill. index0 represents skill1, .... so far only 4 skills
 SKILLS_SLOT_STAR_REQUIREMENTS = [1, 1, 2, 3]
-SKILL_LEVEL_COUNT = [5, 10, 10, 10]
+SKILLS_SLOT_LEVEL_MAX = [5, 10, 10, 10]
 
 # ue's character star requirement to unlock it. currently need 5 star. *** debating whether or not i should
 # make it go up to 7 star, for each upgrade in the ue's star.***
@@ -163,7 +166,7 @@ GEARS_SLOT_LEVEL_REQUIREMENTS = [0, 15, 35]
 
 
 # level templates and masks paths
-LEVELS_DIRECTORY_PATH = r"templates and masks\levels"
+LEVELS_DIRECTORY_PATH = r"levels"
 BOND_LEVELS_DIRECTORY_PATH =  LEVELS_DIRECTORY_PATH + r"\bond"
 GEAR_LEVELS_DIRECTORY_PATH =  LEVELS_DIRECTORY_PATH + r"\gear"
 SKILL_LEVELS_DIRECTORY_PATH = LEVELS_DIRECTORY_PATH + r"\skill"
@@ -280,15 +283,15 @@ SKILLS_MASK_IMAGES.append(None)
 SKILLS_MASK_IMAGES.append(None)
 SKILLS_MASK_IMAGES.append(None)
 
-SKILLS_SLOT_MASK_IMAGES = []
-SKILLS_SLOT_1_MASK_IMAGE = cv2.imread("skills slot 1 mask.png", cv2.IMREAD_GRAYSCALE)
-SKILLS_SLOT_2_MASK_IMAGE = cv2.imread("skills slot 2 mask.png", cv2.IMREAD_GRAYSCALE)
-SKILLS_SLOT_3_MASK_IMAGE = cv2.imread("skills slot 3 mask.png", cv2.IMREAD_GRAYSCALE)
-SKILLS_SLOT_4_MASK_IMAGE = cv2.imread("skills slot 4 mask.png", cv2.IMREAD_GRAYSCALE)
-SKILLS_SLOT_MASK_IMAGES.append(SKILLS_SLOT_1_MASK_IMAGE)
-SKILLS_SLOT_MASK_IMAGES.append(SKILLS_SLOT_2_MASK_IMAGE)
-SKILLS_SLOT_MASK_IMAGES.append(SKILLS_SLOT_3_MASK_IMAGE)
-SKILLS_SLOT_MASK_IMAGES.append(SKILLS_SLOT_4_MASK_IMAGE)
+SKILLS_LEVEL_SLOT_MASK_IMAGES = []
+SKILLS_LEVEL_SLOT_1_MASK_IMAGE = cv2.imread("skills slot 1 mask.png", cv2.IMREAD_GRAYSCALE)
+SKILLS_LEVEL_SLOT_2_MASK_IMAGE = cv2.imread("skills slot 2 mask.png", cv2.IMREAD_GRAYSCALE)
+SKILLS_LEVEL_SLOT_3_MASK_IMAGE = cv2.imread("skills slot 3 mask.png", cv2.IMREAD_GRAYSCALE)
+SKILLS_LEVEL_SLOT_4_MASK_IMAGE = cv2.imread("skills slot 4 mask.png", cv2.IMREAD_GRAYSCALE)
+SKILLS_LEVEL_SLOT_MASK_IMAGES.append(SKILLS_LEVEL_SLOT_1_MASK_IMAGE)
+SKILLS_LEVEL_SLOT_MASK_IMAGES.append(SKILLS_LEVEL_SLOT_2_MASK_IMAGE)
+SKILLS_LEVEL_SLOT_MASK_IMAGES.append(SKILLS_LEVEL_SLOT_3_MASK_IMAGE)
+SKILLS_LEVEL_SLOT_MASK_IMAGES.append(SKILLS_LEVEL_SLOT_4_MASK_IMAGE)
 
 
 

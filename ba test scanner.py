@@ -6,15 +6,13 @@ import random
 import numpy as np
 from pytesseract import pytesseract
 from Constants import *
+from Image import *
 
 
 MAX_HIT = 0
 MIN_MISS = float("inf")
 
 COUNTER = 0
-
-
-print (SCALE_CHEAT_SHEET)
 
 # indices
 # [2:] = starting with index 2
@@ -90,7 +88,7 @@ print (SCALE_CHEAT_SHEET)
 
 ####### THINGS TO DO AND NOTES ########
 # program can currently read a folder of screenshots, and even that of different resolution and sizes
-#
+# redo thresholds and crap, especially for skill level
 # bluestacks screen recoridng records at 1280x720, so if using that please make your client the same resolution
 #   the reason is because if you're doing a different aspect ratio, the recording will have squeezed/stretched items
 # website
@@ -628,8 +626,8 @@ def getLevels(sourceImage, imageScale, sourceLevelsMaskImage, levelTemplateImage
             
             ## record our results
             # the reason why we extend widths, heights, and matches multiple times is because
-            # results and locations may have multiple values. so we extend these ones by the
-            # resultCount(levelCount) for when we start to furtther filter values from our arrays.
+            # results and locations may have multiple values. we want all these arrays to
+            # have the same length for when we use them later in nms.
             levelsWidths.extend([levelSubimageWidth] * nmsCount)
             levelsHeights.extend([levelSubimageHeight] * nmsCount)
             levelsNMSResults.extend(nmsResults)
@@ -670,6 +668,7 @@ def getLevels(sourceImage, imageScale, sourceLevelsMaskImage, levelTemplateImage
     statsLevels = int(statsLevels)
     
 ##    drawBoxes(sourceLevelsImage, nms2Locations, levelsWidths[nms2Order], levelsHeights[nms2Order])
+##    print(nms2Results)
     
     
     return statsLevels
@@ -717,49 +716,31 @@ def getStudentSkills(equipmentImage, imageScale, studentStar):
     skillsSubimage, _, _, skillsSubimageResult, _ = subimageScaledSearch(equipmentImage, imageScale, SKILLS_TEMPLATE_IMAGE, skillsMaskImage)
     
     # get our skill count, depends on the slot count.
-    skillsCount = len(SKILLS_SLOT_MASK_IMAGES)
+    skillsCount = len(SKILLS_SLOT_STAR_REQUIREMENTS)
     
     # initialize our return array. 0 represents the skill not being unlocked
-    studentSkills = np.zeros(skillCount, int)
+    studentSkills = np.zeros(skillsCount, int)
     
     # go through all of our skill slots
-    for skill in range(skillsCount):
-        # get the mask for the respective slot
-        skillsSlotMaskImage = SKILLS_SLOT_MASK_IMAGES[skill]
+    for skillsSlot in range(skillsCount):
+        # get the star requirement for the respective skill slot
+        skillsSlotLevelRequirement = SKILLS_SLOT_STAR_REQUIREMENTS[skillsSlot]
         
-        # get the subimage of the skill slot
-        skillsSlotSubimage = cropImageWithMask(skillsSubimage, skillsSlotMaskImage)
-        cv2.imshow("skillsSlotSubimage", skillsSlotSubimage)
-        # variables to keep track of our best skill level match
-        bestSkillLevelResult = float("inf")
-        bestSkillLevel = -1
+        # if student star isn't high enough, we break
+        if studentStar < skillsSlotLevelRequirement:
+            break
         
-        # depending on the slot, the max skill level is different. slot 1 only goes up to 5. slot 2-4 go up to 10
-        skillLevelCount = SKILL_LEVEL_COUNT[skill]
+        #
+        skillsSlotLevelMax = SKILLS_SLOT_LEVEL_MAX[skillsSlot]
         
-        # go through all our skill level templates
-        for skillLevel in range(skillLevelCount):
-            # get our respective skill level template and mask
-            skillLevelTemplate = SKILL_LEVEL_TEMPLATE_IMAGES[skillLevel]
-            skillLevelMask = SKILL_LEVEL_MASK_IMAGES[skillLevel]
+        # else, we get the level for the respective skill slot
+        skillsLevel = getLevels(skillsSubimage, imageScale, SKILLS_LEVEL_SLOT_MASK_IMAGES[skillsSlot], SKILL_LEVEL_TEMPLATE_IMAGES[:skillsSlotLevelMax], SKILL_LEVEL_MASK_IMAGES[:skillsSlotLevelMax], 0.01, 0.665)
 
-            cv2.imshow("skillLevelTemplate", skillLevelTemplate)
-            cv2.imshow("skillLevelMask", skillLevelMask)
-            
-            # TM for the skill level template and get the result
-            _, _, _, skillLevelResult, _ = subimageScaledSearch(skillsSlotSubimage, imageScale, skillLevelTemplate, skillLevelMask)
-            
-            # check if our match result is better than our current best. if so update our variables
-            if skillLevelResult < bestSkillLevelResult:
-                bestSkillLevelResult = skillLevelResult
-                bestSkillLevel = skill
-        
-        # we store "MAX" at skill level 0 because it's used in all skill slots, and there's no "0" for any
-        if bestSkillLevel == 0:
-            studentSkills[skill] = skillLevelCount
+        if skillsLevel == 0:
+            studentSkills[skillsSlot] = skillsSlotLevelMax
         else:
-            studentSkills[skill] = bestSkillLevel
-    
+            studentSkills[skillsSlot] = skillsLevel
+        
     # return our list of student's skill levels
     return studentSkills
 
@@ -929,19 +910,35 @@ def checkInfo(studentName, studentBond, studentLevel, studentStar, studentSkills
 
 def main(sourceImage):
     equipmentImage, _, _, scale, _ = subimageMultiScaleSearch(sourceImage, EQUIPMENT_TEMPLATE_IMAGE, EQUIPMENT_MASK_IMAGE)
-    
+
+##    start = time.time()
     studentName, studentBond, studentLevel, studentStar = getStudentStats(sourceImage, scale)
-    studentSkills = getStudentSkills(equipmentImage, scale, studentStar)
+    studentSkills = getStudentSkills(equipmentImage, scale, 3)
     ueStar, ueLevel = getStudentUE(equipmentImage, scale, studentStar)
-    gearTiers = getStudentGears(equipmentImage,scale,studentLevel)
+    gearTiers = getStudentGears(equipmentImage, scale, studentLevel)
+##    end = time.time()
     
-    checkInfo(studentName, studentBond, studentLevel, studentStar, studentSkills, ueStar, ueLevel, gearTiers)
+##    print("levels time:" + str(end-start))
+    
+##    checkInfo(studentName, studentBond, studentLevel, studentStar, studentSkills, ueStar, ueLevel, gearTiers)
 
     
-    return 1
+    return studentName, studentBond, studentLevel, studentStar, studentSkills, ueStar, ueLevel, gearTiers
 
-
-
+os.chdir("..")
+directory = "student example"
+for fileName in os.listdir(directory):
+    f = os.path.join(directory, fileName)
+    
+    print(f)
+    sourceImage = cv2.imread(f, cv2.IMREAD_COLOR)
+    
+    startTime = time.time()
+    studentName, studentBond, studentLevel, studentStar, studentSkills, ueStar, ueLevel, gearTiers = main(sourceImage)
+    endTime = time.time()
+    print(studentBond, studentLevel, studentSkills, ueLevel)
+    
+    print("totaltime:" + str(endTime-startTime))
 
 
 

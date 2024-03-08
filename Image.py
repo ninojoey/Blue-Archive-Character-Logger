@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 from pytesseract import pytesseract
+from Constants import * 
 
 
 
