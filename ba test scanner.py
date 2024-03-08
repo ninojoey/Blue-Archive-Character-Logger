@@ -337,8 +337,10 @@ def drawBoxes(sourceImage, nmsLocations, templateWidth, templateHeight):
     x2 = nmsLocations[:,0] + templateWidth
     y2 = nmsLocations[:,1] + templateHeight
     
-    for index in range(len(nmsLocations)):
-        colorr = np.array([0, 0, 255]) * index / len(nmsLocations)
+    nmsCount = len(nmsLocations)
+    
+    for index in range(nmsCount):
+        colorr = np.array([0, 0, 255]) * (nmsCount - index) / nmsCount
         location = nmsLocations[index]
         cv2.rectangle(sourceImage, (location), (x2[index], y2[index]), colorr, 1)
 
@@ -588,6 +590,7 @@ def getStudentName(statsImage, imageScale):
 def getLevels(sourceImage, imageScale, sourceLevelsMaskImage, levelTemplateImages, levelMaskImages, matchThreshold, overlapThreshold):
     # crop out your target area from the stats image given a mask
     sourceLevelsImage = cropImageWithMask(sourceImage, sourceLevelsMaskImage)
+##    cv2.imshow("sourceLevelsImage", sourceLevelsImage)
     
     # lists to keep track of our matches
     levelsWidths = []            # widths of the TM'ed level subimages
@@ -598,14 +601,18 @@ def getLevels(sourceImage, imageScale, sourceLevelsMaskImage, levelTemplateImage
     
     # go through range 0-9 and tm for the respective level template
     levelCount = len(levelTemplateImages)
+##    print("levelCount", levelCount)
     for level in range(levelCount):
         # get the current level template and mask
         levelTemplateImage = levelTemplateImages[level]
         levelMaskImage = levelMaskImages[level]
+
+##        cv2.imshow("levelTemplateImage", levelTemplateImage)
+##        cv2.imshow("levelMaskImage", levelMaskImage)
         
         # TM for it in our levelsSubimage
         levelSubimage, levelSubimageWidth, levelSubimageHeight, levelSubimageResult, levelSubimageResults = subimageScaledSearch(sourceLevelsImage, imageScale, levelTemplateImage, levelMaskImage)
-        
+##        print(levelSubimageResult)
 ##        #### TESTING PURPOSES TO DETERMINE BEST THRESHOLD ####
 ##        global MAX_HIT
 ##        global MIN_MISS
@@ -696,7 +703,7 @@ def getStarCount(sourceImage, imageScale, sourceStarMaskImage, starTemplateImage
 def getStudentStats(sourceImage, imageScale):
     # given our equipment image, TM for the stats with our scale 
     statsSubimage, _, _, statsSubimageResult, _ = subimageScaledSearch(sourceImage, imageScale, STATS_TEMPLATE_IMAGE, STATS_MASK_IMAGE)
-    cv2.imshow("stats sub", statsSubimage)
+##    cv2.imshow("stats sub", statsSubimage)
     
     studentName = getStudentName(statsSubimage, imageScale)
     studentBond = getLevels(statsSubimage, imageScale, STATS_BOND_MASK_IMAGE, BOND_LEVEL_TEMPLATE_IMAGES, BOND_LEVEL_MASK_IMAGES, BOND_LEVEL_MATCH_THRESHOLD, BOND_LEVEL_OVERLAP_THRESHOLD)
@@ -732,9 +739,16 @@ def getStudentSkills(equipmentImage, imageScale, studentStar):
         
         #
         skillsSlotLevelMax = SKILLS_SLOT_LEVEL_MAX[skillsSlot]
+##        used this to try to figure out why my stuff broke with a non-ipad image. was cause my threshold was way too low when looking at smaller images
+##        cv2.imshow("skillsubimage" + str(skillsSlot), skillsSubimage)
+##        print(imageScale)
+##        cv2.imshow("slot mask" + str(skillsSlot), SKILLS_LEVEL_SLOT_MASK_IMAGES[skillsSlot])
+##        for asdf in range(skillsSlotLevelMax):
+##            cv2.imshow(str(asdf) + "t" + str(skillsSlot), SKILL_LEVEL_TEMPLATE_IMAGES[asdf])
+##            cv2.imshow(str(asdf) + "m" + str(skillsSlot), SKILL_LEVEL_MASK_IMAGES[asdf])
         
         # else, we get the level for the respective skill slot
-        skillsLevel = getLevels(skillsSubimage, imageScale, SKILLS_LEVEL_SLOT_MASK_IMAGES[skillsSlot], SKILL_LEVEL_TEMPLATE_IMAGES[:skillsSlotLevelMax], SKILL_LEVEL_MASK_IMAGES[:skillsSlotLevelMax], 0.01, 0.665)
+        skillsLevel = getLevels(skillsSubimage, imageScale, SKILLS_LEVEL_SLOT_MASK_IMAGES[skillsSlot], SKILL_LEVEL_TEMPLATE_IMAGES[:skillsSlotLevelMax], SKILL_LEVEL_MASK_IMAGES[:skillsSlotLevelMax], 0.05, 0.665)
 
         if skillsLevel == 0:
             studentSkills[skillsSlot] = skillsSlotLevelMax
@@ -787,6 +801,7 @@ def getStudentUE(equipmentImage, imageScale, studentStar):
 def getGearTier(gearImage, imageScale):
     # given the specific gear image (gear1, gear2, or gear3), we get the subimage of where the tier should be
     gearTierSubimage = cropImageWithMask(gearImage, GEAR_TIER_MASK_IMAGE)
+##    cv2.imshow(str(time.time()) + "geartiersubimage", gearTierSubimage)
     
     # variables to keep track of which tier template matches best with our image
     bestTierResult = float("inf")
@@ -801,11 +816,12 @@ def getGearTier(gearImage, imageScale):
         tierTemplateImage = TIER_LEVEL_TEMPLATE_IMAGES[tier]
         
         # template match the current tier template in our subimage
-        _, _, _, tierSubimageResult, _ = subimageScaledSearch(gearTierSubimage, imageScale, tierTemplateImage, TIER_LEVEL_MASK_IMAGE)
-        
+        tierSubimage, tierSubimageWidth, tierSubimageHeight, tierSubimageResult, tierSubimageResults = subimageScaledSearch(gearTierSubimage, imageScale, tierTemplateImage, TIER_LEVEL_MASK_IMAGE)
+##        print("tier" + str(tier) + ":" + str(tierSubimageResult))
         # check to see if our current match is better than our best match
         # update our variables if so
         if tierSubimageResult < bestTierResult:
+##            cv2.imshow(str(time.time()) + "tierSubimage" + str(tier), tierSubimage)
             bestTierResult = tierSubimageResult
             bestTier = tier + 1 # +1 because counter starts at 0
     
@@ -840,6 +856,7 @@ def getStudentGears(equipmentImage, imageScale, studentLevel):
         
         # get the gear subimage
         gearSubimage = cropImageWithMask(gearsSubimage, gearsSlotMaskImage)
+##        cv2.imshow("gearSubimage" + str(gear), gearSubimage)
         
         # check if the current gear slot has anything equipped
         isGearEquipped = checkEquipped(gearSubimage, imageScale, GEAR_E_MASK_IMAGE, E_TEMPLATE_IMAGE, E_MASK_IMAGE, E_MATCH_THRESHOLD)
@@ -913,7 +930,8 @@ def main(sourceImage):
 
 ##    start = time.time()
     studentName, studentBond, studentLevel, studentStar = getStudentStats(sourceImage, scale)
-    studentSkills = getStudentSkills(equipmentImage, scale, 3)
+##    print(studentName, studentBond, studentLevel, studentStar)
+    studentSkills = getStudentSkills(equipmentImage, scale, studentStar)
     ueStar, ueLevel = getStudentUE(equipmentImage, scale, studentStar)
     gearTiers = getStudentGears(equipmentImage, scale, studentLevel)
 ##    end = time.time()
@@ -936,7 +954,7 @@ for fileName in os.listdir(directory):
     startTime = time.time()
     studentName, studentBond, studentLevel, studentStar, studentSkills, ueStar, ueLevel, gearTiers = main(sourceImage)
     endTime = time.time()
-    print(studentBond, studentLevel, studentSkills, ueLevel)
+    print(studentName, studentBond, studentLevel, studentStar, studentSkills, ueStar, ueLevel, gearTiers)
     
     print("totaltime:" + str(endTime-startTime))
 
