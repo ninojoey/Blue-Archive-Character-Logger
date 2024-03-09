@@ -1,0 +1,148 @@
+1 hello 2
+student example\airi ipad.png
+Airi bond  20 , level 1 5 star [1 1 1 1] 1 1 [0 0 0]
+totaltime:67.75194001197815
+student example\airi.png
+Airi bond  20 , level 1 4 star [1 1 1 1] 0 0 [0 0 0]
+totaltime:25.379172325134277
+student example\akane bunny ipad.png
+Akane (Bunny) bond  9 , level 1 3 star [1 1 1 1] 0 0 [0 0 0]
+totaltime:67.44465827941895
+student example\akane.png
+Akane bond  20 , level 80 5 star [5 1 7 1] 2 40 [7 6 5]
+totaltime:24.68784236907959
+student example\ako ipad.png
+Ako bond  21 , level 80 5 star [ 5 10 10 10] 2 40 [7 7 6]
+totaltime:67.01051378250122
+student example\asuna ipad.png
+Asuna bond  21 , level 75 5 star [4 5 7 7] 3 50 [7 6 6]
+totaltime:67.02441644668579
+student example\ayane ipad.png
+Ayane bond  20 , level 9 3 star [1 1 1 1] 0 0 [0 0 0]
+totaltime:66.83582544326782
+student example\ayane ss ipad.png
+Ayane (Swimsuit) bond  14 , level 3 3 star [1 1 1 1] 0 0 [0 0 0]
+totaltime:66.96280193328857
+student example\cherino ipad.png
+Cherino bond  22 , level 80 5 star [ 5 10 10 10] 2 40 [7 7 5]
+totaltime:66.67413902282715
+student example\chihiro ipad.png
+Chihiro bond  16 , level 35 3 star [3 1 1 7] 0 0 [1 1 6]
+totaltime:66.86061358451843
+student example\eimi ipad.png
+Eimi bond  20 , level 75 5 star [3 2 4 3] 2 40 [7 7 6]
+totaltime:66.210284948349
+student example\hanae ipad.png
+Hanae bond  22 , level 75 5 star [5 4 7 7] 2 40 [2 2 5]
+totaltime:66.34638118743896
+student example\hanako ipad.png
+Hanako bond  19 , level 1 4 star [1 1 1 1] 0 0 [0 0 0]
+totaltime:66.51383256912231
+student example\hare ipad.png
+Hare bond  19 , level 5 4 star [1 1 1 1] 0 0 [0 0 0]
+totaltime:66.53469014167786
+student example\hasumi ipad.png
+Hasumi (Track) bond  6 , level 80 5 star [ 5  4 10  7] 3 50 [7 3 1]
+totaltime:66.16238641738892
+student example\hibiki 2stars.png
+Hibiki (Cheer Squad) bond  6 , level 1 2 star [1 1 1 0] 0 0 [0 0 0]
+totaltime:26.838050842285156
+student example\hibiki beeg no bord.png
+Hibiki (Cheer Squad) bond  2 , level 1 1 star [11  1  0  0] 0 0 [0 0 0]
+totaltime:24.102571487426758
+student example\hibiki beeg.png
+Hibiki (Cheer Squad) bond  2 , level 1 1 star [11  1  0  0] 0 0 [0 0 0]
+totaltime:26.857065677642822
+student example\hibiki ipad.png
+Hibiki (Cheer Squad) bond  1 , level 1 1 star [1 1 0 0] 0 0 [0 0 0]
+totaltime:66.34612250328064
+student example\himari ipad.png
+Himari bond  3 , level 75 3 star [5 4 4 7] 0 0 [0 0 0]
+totaltime:66.97732353210449
+student example\hinata ipad.png
+Hinata bond  13 , level 75 3 star [3 1 4 4] 0 0 [6 1 4]
+totaltime:72.93397688865662
+student example\iori ipad.png
+Iori bond  22 , level 80 5 star [ 5 10  4 10] 2 40 [7 6 7]
+totaltime:78.23025918006897
+student example\izumi ipad.png
+Izumi bond  20 , level 10 3 star [1 1 1 1] 0 0 [0 0 0]
+totaltime:80.82967138290405
+student example\junko ipad.png
+Junko bond  20 , level 71 4 star [4 4 4 7] 0 0 [5 2 3]
+totaltime:79.8672103881836
+student example\juri ipad.png
+Juri bond  20 , level 7 4 star [1 1 1 1] 0 0 [0 0 0]
+totaltime:79.65853452682495
+student example\kirino ipad.png
+Kirino bond  18 , level 38 3 star [1 1 1 1] 0 0 [5 5 5]
+totaltime:78.06802272796631
+student example\maki beeg.png
+Maki bond  24 , level 80 5 star [ 5 10 10 10] 3 50 [7 6 6]
+totaltime:33.057496309280396
+student example\maki.png
+Maki bond  24 , level 80 5 star [ 5 10 10 10] 3 50 [7 6 6]
+totaltime:5.706263303756714
+student example\marina.png
+Marina bond  8 , level 1 3 star [11  1 11 11] 0 0 [0 0 0]
+totaltime:29.832996606826782
+student example\mashiro ipad.png
+Mashiro bond  17 , level 6 5 star [3 1 1 7] 3 50 [0 0 0]
+totaltime:80.93249106407166
+student example\michiru ipad.png
+Michiru bond  14 , level 15 4 star [1 1 1 1] 0 0 [1 0 0]
+totaltime:81.10514974594116
+student example\midori ipad.png
+Midori bond  19 , level 75 5 star [5 4 8 9] 1 30 [7 6 6]
+totaltime:73.19601821899414
+student example\miku ipad.png
+Hatsune Miku bond  20 , level 1 3 star [1 1 1 1] 0 0 [0 0 0]
+totaltime:72.99165320396423
+student example\mutsuki.png
+Mutsuki bond  23 , level 80 5 star [ 5 10 10  7] 3 50 [7 6 6]
+totaltime:29.909948110580444
+student example\natsu ipad.png
+Natsu bond  20 , level 75 3 star [4 7 6 7] 0 0 [7 7 6]
+totaltime:80.68304109573364
+student example\neru ipad.png
+Neru bond  8 , level 76 3 star [1 1 1 1] 0 0 [5 6 6]
+totaltime:78.8661880493164
+student example\nodoka ipad.png
+Nodoka bond  20 , level 45 4 star [5 7 1 7] 0 0 [2 1 2]
+totaltime:68.61328935623169
+student example\ochin ipad.png
+Chinatsu (Hot Spring) bond  12 , level 70 3 star [ 5 10  1  1] 0 0 [6 3 1]
+totaltime:69.00100708007812
+student example\saya ipad.png
+Saya bond  20 , level 35 4 star [1 1 1 1] 0 0 [1 1 1]
+totaltime:68.90614700317383
+student example\shimiko ipad.png
+Shimiko bond  20 , level 8 5 star [1 1 1 1] 1 30 [0 0 0]
+totaltime:68.79639077186584
+student example\shizuko ipad.png
+Shizuko bond  17 , level 75 5 star [4 1 1 1] 0 0 [7 6 5]
+totaltime:68.79281854629517
+student example\shun ipad.png
+Shun (Small) bond  20 , level 2 3 star [1 1 1 1] 0 0 [0 0 0]
+totaltime:71.81893944740295
+student example\sizumi ipad.png
+Izumi (Swimsuit) bond  20 , level 35 4 star [1 1 1 1] 0 0 [4 3 5]
+totaltime:67.70295906066895
+student example\sumire ipad.png
+Sumire bond  20 , level 12 5 star [1 1 1 1] 1 30 [0 0 0]
+totaltime:63.87843370437622
+student example\suzumi ipad.png
+Suzumi bond  18 , level 4 4 star [4 1 1 1] 0 0 [0 0 0]
+totaltime:62.832072019577026
+student example\tsurugi ipad.png
+Tsurugi bond  15 , level 1 4 star [1 1 1 1] 0 0 [0 0 0]
+totaltime:64.0025405883789
+student example\ui ipad.png
+Ui bond  17 , level 75 3 star [5 7 7 7] 0 0 [7 6 6]
+totaltime:62.80451416969299
+student example\yoshimi ipad.png
+Yoshimi bond  20 , level 56 5 star [2 1 1 1] 1 30 [1 1 1]
+totaltime:64.14345192909241
+student example\yuuk ipad.png
+Yuuka (Track) bond  4 , level 75 3 star [ 5 10  7  7] 0 0 [7 7 7]
+totaltime:63.14710831642151

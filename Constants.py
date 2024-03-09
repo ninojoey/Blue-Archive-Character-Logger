@@ -310,8 +310,6 @@ def printImagesFromArray(imagesArray, counter):
 ##counter = printImagesFromArray(TIER_LEVEL_TEMPLATE_IMAGES, counter)
 ##counter = printImagesFromArray(UE_LEVEL_TEMPLATE_IMAGES, counter)
 
-
-
 def compareTwoImageLists(imageList1, imageList2):
     print(len(imageList1))
     for counter in range(len(imageList1)):

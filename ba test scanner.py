@@ -92,7 +92,8 @@ COUNTER = 0
 # bluestacks screen recoridng records at 1280x720, so if using that please make your client the same resolution
 #   the reason is because if you're doing a different aspect ratio, the recording will have squeezed/stretched items
 # website
-#
+# item/inventory scanner
+# 
 
 
 
@@ -925,7 +926,7 @@ def checkInfo(studentName, studentBond, studentLevel, studentStar, studentSkills
 ##    
 ##    COUNTER += 1
 
-def main(sourceImage):
+def getStudentInfoFromImage(sourceImage):
     equipmentImage, _, _, scale, _ = subimageMultiScaleSearch(sourceImage, EQUIPMENT_TEMPLATE_IMAGE, EQUIPMENT_MASK_IMAGE)
 
 ##    start = time.time()
@@ -943,20 +944,23 @@ def main(sourceImage):
     
     return studentName, studentBond, studentLevel, studentStar, studentSkills, ueStar, ueLevel, gearTiers
 
-os.chdir("..")
-directory = "student example"
-for fileName in os.listdir(directory):
-    f = os.path.join(directory, fileName)
-    
-    print(f)
-    sourceImage = cv2.imread(f, cv2.IMREAD_COLOR)
-    
-    startTime = time.time()
-    studentName, studentBond, studentLevel, studentStar, studentSkills, ueStar, ueLevel, gearTiers = main(sourceImage)
-    endTime = time.time()
-    print(studentName, studentBond, studentLevel, studentStar, studentSkills, ueStar, ueLevel, gearTiers)
-    
-    print("totaltime:" + str(endTime-startTime))
+
+
+def main():
+    os.chdir("..")
+    directory = "student example"
+    for fileName in os.listdir(directory):
+        f = os.path.join(directory, fileName)
+        
+        print(f)
+        sourceImage = cv2.imread(f, cv2.IMREAD_COLOR)
+        
+        startTime = time.time()
+        studentName, studentBond, studentLevel, studentStar, studentSkills, ueStar, ueLevel, gearTiers = getStudentInfoFromImage(sourceImage)
+        endTime = time.time()
+        print(studentName, "bond", studentBond, ", level", studentLevel, studentStar,"star", studentSkills, ueStar, ueLevel, gearTiers)
+        
+        print("totaltime:" + str(endTime-startTime))
 
 
 
