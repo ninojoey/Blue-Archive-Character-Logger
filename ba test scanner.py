@@ -89,10 +89,13 @@ COUNTER = 0
 ####### THINGS TO DO AND NOTES ########
 # program can currently read a folder of screenshots, and even that of different resolution and sizes
 # redo thresholds and crap, especially for skill level
-# bluestacks screen recoridng records at 1280x720, so if using that please make your client the same resolution
-#   the reason is because if you're doing a different aspect ratio, the recording will have squeezed/stretched items
-# website
+# video scanner
+#   bluestacks screen recoridng records at 1280x720, so if using that please make your client the same resolution
+#       the reason is because if you're doing a different aspect ratio, the recording will have squeezed/stretched items
+# website.www
 # item/inventory scanner
+#   elephs
+#       
 # 
 
 
