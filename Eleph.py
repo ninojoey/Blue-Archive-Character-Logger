@@ -1,20 +1,18 @@
 class Eleph:
-    def __init__(self):
-        self.owned = 0
-        self.unlocked = False
-        self.cost = 1
-        self.purchasable = 20
-        self.farm_nodes = 0
-        self.node_refresh = False
-        self.use_eligma = False
-        self.use_shop = False
-        
-    def __init__(self, owned, unlocked, cost, purchasable, farm_nodes, node_refresh, use_eligma, use_shop):
+    def __init__(self, owned = 0, unlocked = True, cost = 1, purchasable = 20, farmNodes = 0, nodeRefresh = False, useEligma = False, useShop = False):
         self.owned = owned
         self.unlocked = unlocked
         self.cost = cost
         self.purchasable = purchasable
-        self.farm_nodes = farm_nodes
-        self.node_refresh = node_refresh
-        self.use_eligma = use_eligma
-        self.use_shop = use_shop
+        self.farm_nodes = farmNodes
+        self.node_refresh = nodeRefresh
+        self.use_eligma = useEligma
+        self.use_shop = useShop
+    
+    def __repr__(self):
+        return str(vars(self))
+    
+    def __str__(self):
+        return str(vars(self))
+
+##"eleph":{"owned":0,"unlocked":true,"cost":1,"purchasable":20,"farm_nodes":0,"node_refresh":false,"use_eligma":false,"use_shop":false}

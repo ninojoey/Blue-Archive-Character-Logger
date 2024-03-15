@@ -96,7 +96,7 @@ COUNTER = 0
 # item/inventory scanner
 #   elephs
 #       
-# 
+# MIGHT NEED TO ADD AN ERROR CATCHER FOR WHEN A SS IS GIVEN AND THERE'S NOTHING MATCHING/DOESN'T MEET THRESHOLD
 
 
 
@@ -943,7 +943,10 @@ def getStudentInfoFromImage(sourceImage):
 ##    print("levels time:" + str(end-start))
     
 ##    checkInfo(studentName, studentBond, studentLevel, studentStar, studentSkills, ueStar, ueLevel, gearTiers)
-
+    
+    
+    student = Student(studentName, studentBond, studentLevel, studentStar, studentSkills, ueStar, ueLevel, gearTiers)
+    
     
     return studentName, studentBond, studentLevel, studentStar, studentSkills, ueStar, ueLevel, gearTiers
 
@@ -980,13 +983,8 @@ def main():
 # do this until you eventually loop back to the initial character you had on screen before starting the recording
 # stop the recording
 
-### how to write the program ###
-# the first frame of the recording should be of a student that's already been completely properly loaded
-# off the first frame, locate stats window, and remember both location and first student's name, and maybe scale
-# afterwards, go frame-by-frame checking to see if the name in the stats window has updated
-#       if not, keep going. update our frames, prev and curr
-#       if so, take your previous frame and suck all the info out of it then update frames.
-#           thinking about maybe adding our sucked frames into an array to keep track of them
+
+
 
 
 # load a videofile given its name and go through it frame-by-frame. we grab the students' info from the frame
@@ -999,28 +997,61 @@ def suckFrames(videoFileName : str):
     # check if the video was opened properly
     isOpened = videoCapture.isOpened()
     
-    # check if anything opened
+    # continue if video was opened properly
     if isOpened == True:
-        ## here we grab the info from the first frame
         # get the first frame
         ret, frame = videoCapture.read()
-
-        # find the stat window from the first frame
-        statWindow, _, _, scale, _ = subimageMultiScaleSearch(sourceImage, EQUIPMENT_TEMPLATE_IMAGE, EQUIPMENT_MASK_IMAGE)
-
-        while ret:
-            print("hi")
-            break
+        
+        # create a set to keep track of the student names. set instead of list because order of names doesn't matter and
+        # it's faster to check if an element exists in a set than in a list
+        studentNameSet = set()
+        
+        #
+        
+        
+        
+        ## 
+        # 
+        while ret == True:
+##            # look through the current frame to try to get student info
+##            studentName = grabStudentName(frame) # this should return "" if there was no name
+##            
+##            ## if this frame's student's name doesn't exist in our set, nab the info and add them to the list
+##            # check if the current student's name doesn't exist in our set
+##            if studentName not in studentNameSet:
+##                # grab the student info
+##                studentInfo = grabStudentInfo(frame)
+##                
+##                # store our student info
+##                studentSet.add(studentInfo)
+##                
+##                # get the next frame of the video
+##                ret, frame = videoCapture.read()
             
-
-        while isOpened:
-            print("yo")
+            
+        
+        
+        ##### should i make a thing where it's like it makes a mask based off of the first student? think i'll only apply it to the video. the reason why
+        ##### i don't wanna add it to ss's is that how would i know? if i judge off scale, then what if their first ss is of their window, then next is
+        ##### the window on their desktop. it should still have the same scale given that the only thing that changed was the size of the whole image.
+        ##### if i do scale + resolution, then it could be the same scenario but they moved their window from left side to right side of screen.
+        #### to find locations of specific items, you're basically just adding all the foujnd locations.
+        ####    ex. eq wind is found at 200, 100. skill window in eq is found at 10, 100. skillslot1 is found at 5,50. then the location of skillslot1 relative
+        ####    the source image would be (x1 + x2 + x3), (y1 + y2 + y3). then we just make a mask based on that. we'll also have the sizes of each one too so we wouldn't need
+        ####    to keep looking 
+        ## !get the first frame! DO NOT DO THIS ANYMORE. DIDN'T THINK ABOUT PHONE SCREEN RECORDER LIKE IPHONE WHERE THEY GO THROUGH THEIR MENU FIRST 
+        ## !grab all of the info of the first student!
+        ## !remember the name (and the location of the name?) and record this frame!
+        ## go frame-by-frame
+        ##  check the name of each frame
+        ##  if new name
+        ##      stop once you find a new
+        
             
     
     # if nothing then something went wrong
     else:
         print("error opening")
-    
     
 ##    # if successfully opened, go through the frames one-by-one and grab the student info in the respective
 ##    # student's last shown frame. this is to make sure that all their info is loaded in, as opposed to getting
